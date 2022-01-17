@@ -1,4 +1,4 @@
-# Inhalte Mathematik 1
+# Mathematik 1
 ## Mengen
 -	Basics
 -	Operanten
