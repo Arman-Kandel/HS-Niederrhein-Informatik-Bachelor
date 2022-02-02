@@ -1,5 +1,6 @@
 # Grundlagen
 - Boolsche Algebra, Normalform, Wahrheitstabelle
+- Minimierung von Boolschen Gleichungen
 - Binärsystem und dessen Konvertierung in andere Systeme (Hexa/Dezimal)
 - Rechnen in Binär
 # VHDL
