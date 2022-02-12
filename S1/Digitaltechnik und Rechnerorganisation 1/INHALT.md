@@ -5,4 +5,4 @@
 - Rechnen in Binär
 # VHDL
 - Erstellen von digitalen Schaltungen mit VHDL
-- Endliche Automaten
+- Erstellen von endlichen Automaten (mit Graphen)
