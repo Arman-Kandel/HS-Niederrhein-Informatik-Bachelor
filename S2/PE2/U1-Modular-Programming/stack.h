@@ -1,0 +1,10 @@
+//
+// Created by arman on 21.03.2022.
+//
+
+#ifndef HS_NIEDERRHEIN_INFORMATIK_BACHELOR_STACK_H
+#define HS_NIEDERRHEIN_INFORMATIK_BACHELOR_STACK_H
+
+typedef struct stack_t stack_t;
+
+#endif //HS_NIEDERRHEIN_INFORMATIK_BACHELOR_STACK_H
