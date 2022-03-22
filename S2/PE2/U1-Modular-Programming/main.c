@@ -19,10 +19,10 @@ void testMaths() {
 }
 
 void testSort(){
-    int arrSize = 3;
+    int arrSize = 7000;
     long* arrStart = createRandomArray(arrSize);
     sortSmallToHigh(arrStart, arrSize);
-    printArray(arrStart, arrSize);
+    //printArray(arrStart, arrSize);
 }
 
 int main() {

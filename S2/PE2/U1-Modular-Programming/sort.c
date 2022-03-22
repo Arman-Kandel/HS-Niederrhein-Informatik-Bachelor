@@ -4,6 +4,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread_time.h>
+#include <math.h>
 #include "sort.h"
 
 /**
@@ -15,34 +17,47 @@
  * @endcode
  */
 long* createRandomArray(int arrSize){
-    printf("Creating array with %d random elements... Adding: \n", arrSize);
+    printf("Creating array with %d random elements...\n", arrSize);
     long* arr = calloc(arrSize, sizeof(long));
     for (long* i = arr; i < arr+arrSize; ++i) {
         *i = rand() << 16+rand();
-        printf("%d ",*i);
+        //printf("%d ",*i);
     }
     printf("Done!\n");
     return arr;
 }
 
-// TODO make this work
+
 void sortSmallToHigh(long* arrStart, int length){
+    struct timespec timeStart, timeEnd;
+    clock_gettime(CLOCK_REALTIME, &timeStart);
+    long countChecks, countSwitches;
     long* max = arrStart+length;
     for (long* i = arrStart; i < max; ++i) {
-        long foundSmaller = 0;
+        long* smallerIndex = NULL;
         long smallerValue = *i;
         for (long* j = i+1; j < max; ++j) {
-            if(foundSmaller==1 && *j < smallerValue){
-                smallerValue = *j;
-            }
-            else if(*j < *i){
-                foundSmaller = 1;
-                smallerValue = *j;
+            long newVal = *j;
+            countChecks++;
+            if(newVal < smallerValue){
+                smallerIndex = j;
+                smallerValue = newVal;
             }
         }
-
-        if(foundSmaller==1) *i = smallerValue;
+        if(smallerIndex != NULL) {
+            countSwitches++;
+            *smallerIndex = *i;
+            *i = smallerValue;
+        }
     }
+    clock_gettime(CLOCK_REALTIME, &timeEnd);
+    long ns = timeEnd.tv_nsec - timeStart.tv_nsec;
+    if(ns < 1.0e6)
+        printf("Sorted array! Took %d nanoseconds or %d milliseconds.\n", ns, round(ns / 1.0e6));
+    else
+        printf("Sorted array! Took %d milliseconds.\n", round(ns / 1.0e6));
+    printf("Checks: %d\n", countChecks);
+    printf("Switches: %d\n", countSwitches);
 }
 
 void printArray(long* arrStart, int length){
