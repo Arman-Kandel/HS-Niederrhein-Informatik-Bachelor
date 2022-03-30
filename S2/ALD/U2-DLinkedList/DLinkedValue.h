@@ -9,8 +9,8 @@
 template<typename T> class DLinkedValue {
 public:
     T value;
-    DLinkedValue* prevValue;
-    DLinkedValue* nextValue;
+    DLinkedValue *prevValue;
+    DLinkedValue *nextValue;
 };
 
 

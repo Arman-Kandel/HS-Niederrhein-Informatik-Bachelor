@@ -4,9 +4,3 @@
 
 #include "DLinkedList.h"
 #include "DLinkedValue.h"
-
-template<typename T>
-void DLinkedList<T>::add(T value) {
-    DLinkedValue<T> valueContainer();
-    valueContainer.value = value;
-}
