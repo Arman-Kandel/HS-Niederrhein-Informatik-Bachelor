@@ -7,17 +7,12 @@
 
 
 class Converter {
-        public :
-        Converter(double[] miles, double[] km);
-        ~ Converter();
-        void printTable();
-        int getValueAt (int pos );
-        void erase (int val );
-        void toScreen ();
-        char getError ();
+public :
+    double toMiles(double kilometers);
+
+    double toKilometers(double miles);
+
+    void printTable(double kilometers[], int length);
 };
-
-
-
 
 #endif //HS_NIEDERRHEIN_INFORMATIK_BACHELOR_CONVERTER_H
