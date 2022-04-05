@@ -3,7 +3,6 @@
 
 int main(int argc, char *argv[])
 {
-    // TODO NOT WORKING YET
     SearchTree<int> tree;
     tree.add(10);
     //tree.add(30);

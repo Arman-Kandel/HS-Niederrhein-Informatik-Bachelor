@@ -12,25 +12,28 @@
 template<typename T>
 class SearchTree {
 private:
-    Node<T> *root;
+    Node<T> *root = NULL;
     void addValue(Node<T>* n, T* val){
-        int a = 10;
-        int* ap = &a;
-        a = *ap;
-        if(*n->value < *val){
+        if (n->value == NULL) {
+            n->value = *val;
+            return;
+        }
+        if(n->value < *val){
             if(n->left) addValue(n->left, val);
             else {
-                Node<T> child(val);
+                Node<T> child;
+                child.value = *val;
+                child.parent = n;
                 n->left = &child;
-                n->left->parent = n;
             }
         }
         else{
             if(n->right) addValue(n->right, val);
             else {
-                Node<T> child(val);
+                Node<T> child;
+                child.value = *val;
+                child.parent = n;
                 n->right = &child;
-                n->right->parent = n;
             }
         }
     }
@@ -43,7 +46,13 @@ private:
 public:
 
     void add(T val){
-        if(!root) root = new Node<T>(&val);
+        if(root == NULL) {
+            Node<T> newRoot;
+            newRoot.value = val;
+            root = &newRoot;
+            std::cout << "SASDDSA\n";
+            std::cout << root->value << "\n";
+        }
         else addValue(root, &val);
     }
 

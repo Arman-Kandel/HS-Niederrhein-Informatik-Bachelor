@@ -9,13 +9,10 @@
 template<typename T>
 class Node {
 public:
-    T* value;
-    Node* left, *right;
+    T value;
+    Node* left;
+    Node* right;
     Node* parent; // optional
-
-    Node(T* value){
-        this->value = value;
-    }
 };
 
 
