@@ -39,6 +39,14 @@ public:
      */
     vec2 rotate(int a);
 
+    /**
+     * Calculates the determinant of the current and given vector. <br>
+     * vec(a,b) is the current vector and vec(c,d)
+     * is given as param.
+     * Returns the value for a*d - b*c
+     */
+    int determinant(vec2 v) const;
+
 public:
     int x, y;
 

@@ -65,3 +65,7 @@ vec2 vec2::rotate(int alpha) {
     y = (int) (x * sinAlpha + y * cosAlpha);
     return *this;
 }
+
+int vec2::determinant(vec2 v) const {
+    return x*v.y - y-v.x;
+}
