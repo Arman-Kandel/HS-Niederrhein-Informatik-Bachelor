@@ -37,10 +37,10 @@ private:
             }
         }
     }
-    void printNode(Node<T> n){
+    void printNode(Node<T>* n){
         std::cout << n->value << " p:" << n->parent->value << " l:" << n->left->value << " r:" << n->right->value << "\n";
-        printNode(n.left);
-        printNode(n.right);
+        printNode(n->left);
+        printNode(n->right);
     }
 
 public:
