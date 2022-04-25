@@ -4,4 +4,4 @@ project(U6-Generics)
 include_directories(.)
 
 add_executable(U6-Generics
-        main.cpp)
+        main.cpp ../../ALD/U6-QuickSort/QuickSort.h)
