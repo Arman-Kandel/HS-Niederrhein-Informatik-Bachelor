@@ -2,7 +2,6 @@
 #include <string>
 #include "coollist.h"
 
-
 int main(int argc, char *argv[]) {
     auto cl = coollist<std::string>();
     cl[0] = "John";
@@ -11,5 +10,8 @@ int main(int argc, char *argv[]) {
     for (const auto &item : map){
         std::cout << item.first << " " << item.second << "\n";
     }
+
+
+
     return 0;
 }
