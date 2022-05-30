@@ -2,8 +2,6 @@
 
 ### Basics
 - [What is an algorithm?](https://www.tutorialspoint.com/data_structures_algorithms/algorithms_basics.htm#)
-- [Selection sort](https://www.geeksforgeeks.org/selection-sort/)
-- [
 
 <details>
   <summary>How to keep track of time in C?</summary>
@@ -26,8 +24,18 @@ int number = rand() << 16+rand();
 // thus we do the trick above to get max 32bit numbers
 ```
 </details>
+  
+<details>
+  <summary>How to compare strings in C?</summary>
+  
+```c
+char str1[] = "abcd", str2[] = "abCd", str3[] = "abcd";
+int result = strcmp(str1, str2); // strcmp aka stringcompare returns 0 if strings are equal
+```
+</details>
 
 ### Algorithms
+- [Selection sort](https://www.geeksforgeeks.org/selection-sort/)
   
 ### Data structures
 - [Doubly Linked List](https://www.geeksforgeeks.org/doubly-linked-list/?ref=lbp)
