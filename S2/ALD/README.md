@@ -3,7 +3,7 @@
 ### Basics
 - [What is an algorithm?](https://www.tutorialspoint.com/data_structures_algorithms/algorithms_basics.htm#)
 - [Selection sort](https://www.geeksforgeeks.org/selection-sort/)
-- 
+- [
 
 <details>
   <summary>How to keep track of time in C?</summary>
@@ -21,10 +21,13 @@ double duration = (double)(t2 - t1)/(double)CLOCKS_PER_SEC;
   <summary>How to generate random numbers in C?</summary>
   
 ```c
-#define _CRT_RAND_S
-#include <stdlib.h>
-int number = 0;
-rand_s(&number);
+int number = rand() << 16+rand();
+// rand() only returns 16 bit numbers max,
+// thus we do the trick above to get max 32bit numbers
 ```
 </details>
 
+### Algorithms
+  
+### Data structures
+- [Doubly Linked List](https://www.geeksforgeeks.org/doubly-linked-list/?ref=lbp)
