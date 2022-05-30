@@ -2,6 +2,9 @@
 
 ### Basics
 - [What is an algorithm?](https://www.tutorialspoint.com/data_structures_algorithms/algorithms_basics.htm#)
+- [Selection sort](https://www.geeksforgeeks.org/selection-sort/)
+- 
+
 <details>
   <summary>How to keep track of time in C?</summary>
   
@@ -20,7 +23,8 @@ double duration = (double)(t2 - t1)/(double)CLOCKS_PER_SEC;
 ```c
 #define _CRT_RAND_S
 #include <stdlib.h>
-int number = rand_s();
+int number = 0;
+rand_s(&number);
 ```
 </details>
 
