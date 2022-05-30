@@ -7,9 +7,10 @@
 - 2💠[What is a mathematic proof?](https://en.wikipedia.org/wiki/Mathematical_proof#Direct_proof)
 - 2💠[How to prove a functions/algorithms time complexity?](https://www.google.com/search?q=How+to+prove+a+functions%2Falgorithms+time+complexity)
 - 0.5💠[What are left/right shift operators in C?](https://www.geeksforgeeks.org/left-shift-right-shift-operators-c-cpp/)
-- 1💠[What is an adjacency Matrix](https://en.wikipedia.org/wiki/Adjacency_matrix) and an [adjacency list?](https://en.wikipedia.org/wiki/Adjacency_list)
-- 1💠[What is meant by lexicographix order?](https://en.wikipedia.org/wiki/Lexicographic_order)
-- 1💠[The Single-Source-Shortest-Path-Problem.](https://www.google.com/search?q=Single-Source-Shortest-Path-Problem)
+- 3💠[What is an adjacency Matrix](https://en.wikipedia.org/wiki/Adjacency_matrix) and an [adjacency list?](https://en.wikipedia.org/wiki/Adjacency_list)
+- 3💠[What is meant by lexicographix order?](https://en.wikipedia.org/wiki/Lexicographic_order)
+- 3💠[The Single-Source-Shortest-Path-Problem.](https://www.google.com/search?q=Single-Source-Shortest-Path-Problem)
+- 1💠[How does a distance matrix work?](https://en.wikipedia.org/wiki/Distance_matrix)
 
 <details>
   <summary>1💠How to keep track of time in C?</summary>
@@ -52,9 +53,12 @@ int result = strcmp(str1, str2); // strcmp aka stringcompare returns 0 if string
 - 0.5💠[Interpolation Search](https://www.geeksforgeeks.org/interpolation-search/)
 - 0💠[Interpolation Search vs Binary Search](https://www.geeksforgeeks.org/g-fact-84)
 - 2💠[Hashing](https://www.geeksforgeeks.org/hashing-set-1-introduction/)
-- 1💠[Prims greedy algorithm](https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/)
+- 3💠[Prims Algorithm](https://www.geeksforgeeks.org/prims-minimum-spanning-tree-mst-greedy-algo-5/)
+- 3💠[Dijkstras Shortest Path Algorithm](https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/)
+- 3💠[Floyd-Warshall Algorithm](https://www.geeksforgeeks.org/floyd-warshall-algorithm-dp-16/)
+- 1💠[Levenshtein-Distance](https://www.geeksforgeeks.org/java-program-to-implement-levenshtein-distance-computing-algorithm/) and [Edit-Distance](https://en.wikipedia.org/wiki/Edit_distance)
   
 ### Data structures
 - 1💠[Doubly Linked List](https://www.geeksforgeeks.org/doubly-linked-list)
 - 1💠[Binary Search Tree](https://www.geeksforgeeks.org/binary-search-tree-data-structure)
-- 1💠[Minimum Spanning Tree](https://www.geeksforgeeks.org/properties-of-minimum-spanning-tree-mst/)
+- 3💠[Minimum Spanning Tree](https://www.geeksforgeeks.org/properties-of-minimum-spanning-tree-mst/)
