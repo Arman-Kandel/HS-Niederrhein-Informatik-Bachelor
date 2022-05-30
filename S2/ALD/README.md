@@ -4,6 +4,7 @@
 - [What is an algorithm?](https://www.tutorialspoint.com/data_structures_algorithms/algorithms_basics.htm#)
 <details>
   <summary>How to keep track of time?</summary>
+  
 ```c
 #include <time.h>
 clock_t t1 = clock();
