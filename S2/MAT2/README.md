@@ -2,5 +2,7 @@
 (Mathematic 2)
 
 ### Basics
-- 1💠[What is an algorithm?](https://www.tutorialspoint.com/data_structures_algorithms/algorithms_basics.htm#)
+- 1💠[Vector](https://en.wikipedia.org/wiki/Vector_(mathematics_and_physics))
+- 1💠[Vector space](https://en.wikipedia.org/wiki/Vector_space)
+- 1💠[Vector calculus](https://en.wikipedia.org/wiki/Vector_calculus)
 
