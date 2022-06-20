@@ -1,12 +1,15 @@
 #define TEST // Uncomment to run in test mode
 #include <stdio.h>
-#include "wiringPi.h"
+#include <stdbool.h>
 #include "my-utils.h"
+#ifndef _WIN32
+#include "wiringPi.h"
+#endif
 
 // Constant globals
 const int maxLoopCount = 10;
-const int maxDistance = 1000;
-const int minDistance = 9;
+const int maxDistance = 4;
+const int minDistance = 1;
 // Note that the globals below should
 // only be read from other threads:
 double latestDistance = 0;
@@ -23,6 +26,30 @@ const int pinSuperSonicTrigger = 22;
 const int pinMatrixDIN = 27;
 const int pinMatrixLOAD = 28;
 const int pinMatrixCLK = 29;
+
+
+void sendMotorBits(bool b0, bool b1, bool b2, bool b3){
+#ifdef TEST
+    printf("Motor state: %d%d%d%d\n", b0, b1, b2, b3);
+#else
+    digitalWrite(pinMotor1AD4, b0);
+    digitalWrite(pinMotor1BD5, b1);
+    digitalWrite(pinMotor2AD6, b2);
+    digitalWrite(pinMotor2BD7, b3);
+#endif
+}
+void useMotor(int state){
+    switch (state) {
+        case 0: sendMotorBits(1, 0, 0, 0); return;
+        case 1: sendMotorBits(1, 1, 0, 0); return;
+        case 2: sendMotorBits(0, 1, 0, 0); return;
+        case 3: sendMotorBits(0, 1, 1, 0); return;
+        case 4: sendMotorBits(0, 0, 1, 0); return;
+        case 5: sendMotorBits(0, 0, 1, 1); return;
+        case 6: sendMotorBits(0, 0, 0, 1); return;
+        case 7: sendMotorBits(1, 0, 0, 1); return;
+    }
+}
 
 /**
  * @return distance in meters, determined by the ultrasonic sensor.
@@ -50,6 +77,9 @@ double getDistance(){
  * where the first 8 are the address and the last 8 the data.
  */
 void showData(unsigned char address, unsigned char data){
+#ifdef TEST
+    printf("address: %c data: %c\n",address, data);
+#else
     digitalWrite(pinMatrixLOAD, 0);
     for (int i = 0; i < 8; ++i) {
         if (address & 0x01) digitalWrite(pinMatrixDIN, 1);
@@ -68,11 +98,11 @@ void showData(unsigned char address, unsigned char data){
         data = data >> 1;
     }
     digitalWrite(pinMatrixLOAD, 1);
+#endif
 }
-
 void showMediumFace(){
 #ifdef TEST
-    printf("[LED_MATRIX] Medium face.");
+    printf("[LED_MATRIX] Medium face.\n");
 #else
     showData(0b00000000, 0b11111111);
 #endif
@@ -80,31 +110,37 @@ void showMediumFace(){
 }
 void showHappyFace(){
 #ifdef TEST
-    printf("[LED_MATRIX] Happy face.");
+    printf("[LED_MATRIX] Happy face.\n");
 #else
     showData(0b00000000, 0b11111111);
 #endif
 }
 void showSadFace(){
 #ifdef TEST
-    printf("[LED_MATRIX] Sad face.");
+    printf("[LED_MATRIX] Sad face.\n");
 #else
     showData(0b00000000, 0b11111111);
 #endif
 }
 
-void runT1(){ // Schrittmotor
-
-}
-void runT2(){ // Ultraschall
+void runT1(){ // Stepper motor
+    int state = 0;
     for (int i = 0; i < maxLoopCount; ++i) {
-        double distance = getDistance();
-        latestDistance = distance;
-        printf("[T2/SUPER_SONIC_SENSOR] %f meters", latestDistance);
+        useMotor(state);
+        state++;
+        if(state >= 8) state = 0;
         sleep_ms(1000);
     }
 }
-void runT3(){ // LEDs
+void runT2(){ // Ultrasonic sensor
+    for (int i = 0; i < maxLoopCount; ++i) {
+        double distance = getDistance();
+        latestDistance = distance;
+        printf("[T2-%d/SUPER_SONIC_SENSOR] %f meters\n", i, latestDistance);
+        sleep_ms(1000);
+    }
+}
+void runT3(){ // LEDs matrix
     for (int i = 0; i < maxLoopCount; ++i) {
         if(latestDistance <= maxDistance && latestDistance >= minDistance) showMediumFace();
         else if(latestDistance > maxDistance) showHappyFace();
@@ -115,7 +151,6 @@ void runT3(){ // LEDs
 
 #ifdef _WIN32 // do Windows-specific stuff
 #include <windows.h>
-#include <unistd.h>
 
 DWORD WINAPI winT1Run(void* data) {
     runT1();
@@ -132,11 +167,11 @@ DWORD WINAPI winT3Run(void* data) {
 
 int initWinThreads() {
     HANDLE t1 = CreateThread(NULL, 0, winT1Run, NULL, 0, NULL);
-    if (!t1) {printf("Failed to start t1!");return -1;}
+    if (!t1) {printf("Failed to start t1!\n");return -1;}
     HANDLE t2 = CreateThread(NULL, 0, winT2Run, NULL, 0, NULL);
-    if (!t2) {printf("Failed to start t2!");return -1;}
+    if (!t2) {printf("Failed to start t2!\n");return -1;}
     HANDLE t3 = CreateThread(NULL, 0, winT3Run, NULL, 0, NULL);
-    if (!t3) {printf("Failed to start t3!");return -1;}
+    if (!t3) {printf("Failed to start t3!\n");return -1;}
 
     WaitForSingleObject(t1,INFINITE);
     WaitForSingleObject(t2,INFINITE);
@@ -176,9 +211,6 @@ int main(){
     printf("Note that you are currently running in test mode!\n");
 #else
     wiringPiSetup();
-    pinMode(GPIO-Nr., OUTPUT);
-#endif
-    wiringPiSetup();
     // Set pin mode for motor pins:
     pinMode(pinMotor1AD4, OUTPUT);
     pinMode(pinMotor1BD5, OUTPUT);
@@ -191,12 +223,7 @@ int main(){
     pinMode(pinMatrixDIN, OUTPUT);
     pinMode(pinMatrixLOAD, OUTPUT);
     pinMode(pinMatrixCLK, OUTPUT);
-
-
-
-    // write only on output pins, and read only on input pins
-    digitalWrite(GPIO-Nr., 0);
-
+#endif
 #ifdef _WIN32
     initWinThreads();
 #else

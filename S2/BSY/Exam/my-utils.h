@@ -1,5 +1,5 @@
 // https://stackoverflow.com/a/28827188/13600212
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #elif _POSIX_C_SOURCE >= 199309L
 #include <time.h>   // for nanosleep
