@@ -1,4 +1,4 @@
-#define TEST // Uncomment to run in test mode
+//#define TEST // Uncomment to run in test mode
 #include <stdio.h>
 #include <stdbool.h>
 #include "my-utils.h"
@@ -207,6 +207,7 @@ int initUnixThreads() {
 #endif
 
 int main(){
+    printf("hello!\n");
 #ifdef TEST
     printf("Note that you are currently running in test mode!\n");
 #else
