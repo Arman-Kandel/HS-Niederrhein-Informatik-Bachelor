@@ -29,9 +29,8 @@ const int pinMatrixCLK = 29;
 
 
 void sendMotorBits(bool b0, bool b1, bool b2, bool b3){
-#ifdef TEST
     printf("Motor state: %d%d%d%d\n", b0, b1, b2, b3);
-#else
+#ifndef TEST
     digitalWrite(pinMotor1AD4, b0);
     digitalWrite(pinMotor1BD5, b1);
     digitalWrite(pinMotor2AD6, b2);
@@ -62,6 +61,7 @@ double getDistance(){
     digitalWrite(pinSuperSonicTrigger, 1);
     sleep_ms(10);
     digitalWrite(pinSuperSonicTrigger, 0);
+    while(digitalRead(pinSuperSonicEcho) == 0);
     long long time1 = getCurrentTime();
     while(digitalRead(pinSuperSonicEcho) == 1);
     long long time2 = getCurrentTime();
@@ -224,12 +224,16 @@ int main(){
     pinMode(pinMatrixDIN, OUTPUT);
     pinMode(pinMatrixLOAD, OUTPUT);
     pinMode(pinMatrixCLK, OUTPUT);
+    // Small LEDs for status
+    pinMode(0, OUTPUT);
+    digitalWrite(0, 1);
 #endif
 #ifdef _WIN32
     initWinThreads();
 #else
     initUnixThreads();
 #endif
+    digitalWrite(0, 0);
 }
 
 
