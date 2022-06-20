@@ -1,11 +1,15 @@
 #define TEST // Uncomment to run in test mode
 #include <stdio.h>
 #include "wiringPi.h"
-#include "time-utils.h"
+#include "my-utils.h"
 
+// Constant globals
 const int maxLoopCount = 10;
 const int maxDistance = 1000;
 const int minDistance = 9;
+// Note that the globals below should
+// only be read from other threads:
+double latestDistance = 0;
 
 // Pins for stepper motor:
 const int pinMotor1AD4 = 6;
@@ -19,8 +23,6 @@ const int pinSuperSonicTrigger = 22;
 const int pinMatrixDIN = 27;
 const int pinMatrixLOAD = 28;
 const int pinMatrixCLK = 29;
-
-// TODO usleep() takes microseconds, so you will have to multiply the input by 1000 in order to sleep in milliseconds.
 
 /**
  * @return distance in meters, determined by the ultrasonic sensor.
@@ -43,18 +45,72 @@ double getDistance(){
 #endif
 }
 
-void runT1(){ // Schrittmotor
+/**
+ * Send 16 bit to LEDs MAX7219,
+ * where the first 8 are the address and the last 8 the data.
+ */
+void showData(unsigned char address, unsigned char data){
+    digitalWrite(pinMatrixLOAD, 0);
+    for (int i = 0; i < 8; ++i) {
+        if (address & 0x01) digitalWrite(pinMatrixDIN, 1);
+        else digitalWrite(pinMatrixDIN, 0);
+        digitalWrite(pinMatrixCLK, 1);
+        sleep_ms(1);
+        digitalWrite(pinMatrixCLK, 0);
+        address = address >> 1;
+    }
+    for (int i = 0; i < 8; ++i) {
+        if (data & 0x01) digitalWrite(pinMatrixDIN, 1);
+        else digitalWrite(pinMatrixDIN, 0);
+        digitalWrite(pinMatrixCLK, 1);
+        sleep_ms(1);
+        digitalWrite(pinMatrixCLK, 0);
+        data = data >> 1;
+    }
+    digitalWrite(pinMatrixLOAD, 1);
+}
+
+void showMediumFace(){
 #ifdef TEST
-
+    printf("[LED_MATRIX] Medium face.");
 #else
+    showData(0b00000000, 0b11111111);
+#endif
 
+}
+void showHappyFace(){
+#ifdef TEST
+    printf("[LED_MATRIX] Happy face.");
+#else
+    showData(0b00000000, 0b11111111);
 #endif
 }
-void runT2(){ // Ultraschall
+void showSadFace(){
+#ifdef TEST
+    printf("[LED_MATRIX] Sad face.");
+#else
+    showData(0b00000000, 0b11111111);
+#endif
+}
+
+void runT1(){ // Schrittmotor
 
 }
+void runT2(){ // Ultraschall
+    for (int i = 0; i < maxLoopCount; ++i) {
+        double distance = getDistance();
+        latestDistance = distance;
+        printf("[T2/SUPER_SONIC_SENSOR] %f meters", latestDistance);
+        sleep_ms(1000);
+    }
+}
 void runT3(){ // LEDs
-
+    for (int i = 0; i < maxLoopCount; ++i) {
+        if(latestDistance <= maxDistance && latestDistance >= minDistance) showMediumFace();
+        else if(latestDistance > maxDistance) showHappyFace();
+        else showSadFace();
+        sleep_ms(1000);
+    }
 }
 
 #ifdef _WIN32 // do Windows-specific stuff
