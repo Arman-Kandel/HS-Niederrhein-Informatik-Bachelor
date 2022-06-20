@@ -7,7 +7,7 @@ include_directories(.)
 
 add_executable(${PROJECT_NAME}
         main.c
-        )
+        wiringPi.h time-utils.h)
 
 # Below is required for thread libraries
 set(THREADS_PREFER_PTHREAD_FLAG ON)
