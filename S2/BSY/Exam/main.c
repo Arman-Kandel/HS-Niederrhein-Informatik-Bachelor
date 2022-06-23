@@ -226,7 +226,7 @@ void runT2(){ // Ultrasonic sensor
     for (int i = 0; i < maxLoopCount * 4; ++i) {
         double distance = getDistance();
         latestDistance = distance;
-        printf("[T2-%d/SUPER_SONIC_SENSOR] %f meters Status: %s\n", i, latestDistance, strerror(errno));
+        printf("[T2-%d/SUPER_SONIC_SENSOR] %f meters Status(%d): %s\n", i, latestDistance, errno, strerror(errno));
         sleep_ms(1000 / 4);
     }
 }
@@ -303,7 +303,10 @@ int main(){
 #ifdef TEST
     printf("Note that you are currently running in test mode!\n");
 #else
+    printf("[SETUP] Starting... Status(%d): %s\n", errno, strerror(errno));
     wiringPiSetup();
+    printf("[SETUP] WiringPi setup complete. Status(%d): %s\n", errno, strerror(errno));
+    errno = 0;
     // Set pin mode for motor pins:
     pinMode(pinMotor1AD4, OUTPUT);
     pinMode(pinMotor1BD5, OUTPUT);
@@ -318,6 +321,7 @@ int main(){
     pinMode(pinMatrixCLK, OUTPUT);
     // Small LEDs for status
     pinMode(0, OUTPUT);
+    printf("[SETUP] PIN modes set. Status(%d): %s\n", errno, strerror(errno));
     digitalWrite(0, 1);
 #endif
     // Test LED matrix
