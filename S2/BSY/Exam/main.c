@@ -22,8 +22,8 @@ void unlock(){
 }
 
 const int maxLoopCount = 10;
-const int maxDistance = 4;
-const int minDistance = 1;
+const double maxDistance = 0.15;
+const double minDistance = 0.10;
 // Note that the globals below should
 // only be read from other threads:
 double latestDistance = 0;
@@ -87,18 +87,21 @@ double getDistance(){
     return rand() % (max-min + 1) + min;
 #else
     lock();
+    digitalWrite(pinSuperSonicTrigger, 0);
+    sleep_ms(5);
     digitalWrite(pinSuperSonicTrigger, 1);
     sleep_ms(10);
     digitalWrite(pinSuperSonicTrigger, 0);
     while(digitalRead(pinSuperSonicEcho) == 0);
-    long long time1 = getCurrentTime();
+    long long time1 = getNowMicros();
     while(digitalRead(pinSuperSonicEcho) == 1);
-    long long time2 = getCurrentTime();
+    long long time2 = getNowMicros();
     unlock();
     // Die Schallgeschwindigkeit in trockener Luft von 20 °C beträgt 343,2 m/s (1236 km/h)
     // also 0,3432 m/ms
-    long long timeTook = time2 - time1;
-    return (timeTook * 0.3432) / 2;
+    long long nanoSecondsTook = time2 - time1;
+    return (nanoSecondsTook * (343.2 / 1000000)) / 2; // divide by 1000000 because second to microsecond
+    // divide by 2 because sound bounces back
 #endif
 }
 
@@ -143,7 +146,13 @@ void setLEDBits(bool a1, bool a2, bool a3, bool a4, bool d1, bool d2, bool d3, b
     printf("[LEDS] Set LEDs at %d%d%d%d to %d%d%d%d%d%d%d%d Status: %s\n", a1,a2,a3,a4,  d1,d2,d3,d4,d5,d6,d7,d8, strerror(errno));
 #endif
 }
-void disableLEDMatrix(){
+void startLEDMatrix(){
+    setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1); // Set normal operation
+    setLEDBits(1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1); // Set scan limit to all digits
+    setLEDBits(1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Set no decode mode, to set each segment
+    setLEDBits(1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1); // Set max intensity
+}
+void stopLEDMatrix(){
     printf("[LED_MATRIX] Disable LEDs.\n");
 #ifndef TEST
     setLEDBits(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 0 address: 0001
@@ -154,6 +163,9 @@ void disableLEDMatrix(){
     setLEDBits(0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 5 address: 0110
     setLEDBits(0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 6 address: 0111
     setLEDBits(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 7 address: 1000
+
+    setLEDBits(1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1); // Set min intensity
+    setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
 #endif
 }
 void showMediumFace(){
@@ -211,28 +223,23 @@ void runT1(){ // Stepper motor
     stopMotor();
 }
 void runT2(){ // Ultrasonic sensor
-    for (int i = 0; i < maxLoopCount; ++i) {
+    for (int i = 0; i < maxLoopCount * 4; ++i) {
         double distance = getDistance();
         latestDistance = distance;
         printf("[T2-%d/SUPER_SONIC_SENSOR] %f meters Status: %s\n", i, latestDistance, strerror(errno));
-        sleep_ms(1000);
+        sleep_ms(1000 / 4);
     }
 }
 void runT3(){ // LEDs matrix
-    setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
-    setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1); // Set normal operation
-    setLEDBits(1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1); // Set scan limit to all digits
-    setLEDBits(1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Set no decode mode, to set each segment
-    setLEDBits(1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1); // Set max intensity
+    //setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
+    startLEDMatrix();
     for (int i = 0; i < maxLoopCount; ++i) {
         if(latestDistance <= maxDistance && latestDistance >= minDistance) showMediumFace();
         else if(latestDistance > maxDistance) showHappyFace();
         else showSadFace();
         sleep_ms(1000);
     }
-    setLEDBits(1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1); // Set min intensity
-    disableLEDMatrix();
-    setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
+    stopLEDMatrix();
 }
 
 #ifdef _WIN32 // do Windows-specific stuff
@@ -313,10 +320,15 @@ int main(){
     pinMode(0, OUTPUT);
     digitalWrite(0, 1);
 #endif
+    // Test LED matrix
+    startLEDMatrix();
+    sleep_ms(5000);
+    stopLEDMatrix();
+    sleep_ms(5000);
 #ifdef _WIN32
-    initWinThreads();
+    //initWinThreads();
 #else
-    initUnixThreads();
+    //initUnixThreads();
 #endif
     digitalWrite(0, 0);
 }

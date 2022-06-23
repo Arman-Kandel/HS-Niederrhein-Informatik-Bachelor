@@ -17,14 +17,21 @@ void sleep_ms(int milliseconds){ // cross-platform sleep function
 }
 
 /**
- * Timestamp in milliseconds of the current time.
+ * Time passed in milliseconds since 00:00 Coordinated Universal Time (UTC), January 1, 1970.
  */
-long long getCurrentTime() {
-    struct timeval te;
-    gettimeofday(&te, NULL); // get current time
-    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // calculate milliseconds
-    // printf("milliseconds: %lld\n", milliseconds);
-    return milliseconds;
+long long getNowMillis() {
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return t.tv_sec * 1000LL + t.tv_usec / 1000; // calc milliseconds
+}
+
+/**
+ * Time passed in microseconds since 00:00 Coordinated Universal Time (UTC), January 1, 1970.
+ */
+long long getNowMicros(){
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return t.tv_sec * 1000000LL + t.tv_usec; // calc micros
 }
 
 
