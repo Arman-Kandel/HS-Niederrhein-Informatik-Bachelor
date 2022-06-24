@@ -35,8 +35,21 @@ void unlock(){
 const int maxLoopCount = 10;
 const int maxDistanceCm = 10;
 const int minDistanceCm = 5;
-// Note that the globals below should
-// only be read from other threads:
+/**
+ * This is a global variable used across multiple threads,
+ * but it should only be modified by one (can be read by
+ * all threads without problems).
+ * If you wanted to modify this on multiple threads, make sure
+ * to acquire locks first like shown below:
+ * @code
+ #include <pthread.h>
+ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+ void *exampleFunc(void* param){
+   pthread_mutex_lock(&mutex); // lock
+   // modify variable
+   pthread_mutex_unlock(&mutex); // unlock
+ }
+ */
 int latestDistanceCm = 0;
 
 // Pins for stepper motor:
