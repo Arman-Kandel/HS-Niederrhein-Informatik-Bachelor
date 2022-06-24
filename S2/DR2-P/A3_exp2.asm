@@ -7,7 +7,8 @@
 ; Endlosschleife wenn stackpointer und port richtungen initialisiert sind.
 
        ORG   $1000    ; Start
-       LDS   $1000    ; load stackpointer
+RAMEND EQU   $3FFF    ; =
+       LDS   #RAMEND+1; load stackpointer to last address
 ; Reserve memory space (1 byte each) for INPUT Schalter
 S0     DS.B  1
 S1     DS.B  1
