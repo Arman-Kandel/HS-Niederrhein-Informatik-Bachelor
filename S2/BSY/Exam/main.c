@@ -8,6 +8,7 @@
  * It displays either a neutral face, when latestDistance is
  * within min and max distance, or a sad face when smaller
  * than min distance, or a happy face when bigger than max distance.
+ * @author Arman Kandel
  */
 //#define TEST // Uncomment to run in test mode
 #include <stdio.h>
