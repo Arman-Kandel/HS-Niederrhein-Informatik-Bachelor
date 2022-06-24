@@ -1,3 +1,14 @@
+/**
+ * This program will have 3 running threads. <p>
+ * First thread uses the stepper motor, to rotate. <p>
+ * Second thread updates the latestDistance variable (distance from
+ * sensor to the stepper motor), by
+ * periodically calculating the distance via the supersonic sensor. <p>
+ * Third thread reads the latestDistance variable and controls the LED-Matrix.
+ * It displays either a neutral face, when latestDistance is
+ * within min and max distance, or a sad face when smaller
+ * than min distance, or a happy face when bigger than max distance.
+ */
 //#define TEST // Uncomment to run in test mode
 #include <stdio.h>
 #include <stdbool.h>
@@ -22,11 +33,11 @@ void unlock(){
 }
 
 const int maxLoopCount = 10;
-const double maxDistance = 0.15;
-const double minDistance = 0.10;
+const int maxDistanceCm = 10;
+const int minDistanceCm = 5;
 // Note that the globals below should
 // only be read from other threads:
-double latestDistance = 0;
+int latestDistanceCm = 0;
 
 // Pins for stepper motor:
 const int pinMotor1AD4 = 6;
@@ -79,9 +90,9 @@ void stopMotor(){
 }
 
 /**
- * @return distance in meters, determined by the ultrasonic sensor.
+ * @return distance in centimeters, determined by the ultrasonic sensor.
  */
-double getDistance(){
+int getDistance(){
 #ifdef TEST
     int min = 0, max = 5;
     return rand() % (max-min + 1) + min;
@@ -100,8 +111,10 @@ double getDistance(){
     // Die Schallgeschwindigkeit in trockener Luft von 20 °C beträgt 343,2 m/s (1236 km/h)
     // also 0,3432 m/ms
     long long nanoSecondsTook = time2 - time1;
-    return (nanoSecondsTook * (343.2 / 1000000)) / 2; // divide by 1000000 because second to microsecond
+    return (int)(((nanoSecondsTook * (343.2 / 1000000)) / 2) * 100);
+    // divide by 1000000 because second to microsecond
     // divide by 2 because sound bounces back
+    // multiply with 100, m to cm
 #endif
 }
 
@@ -143,18 +156,10 @@ void setLEDBits(bool a1, bool a2, bool a3, bool a4, bool d1, bool d2, bool d3, b
     setLEDBit(d8);
     digitalWrite(pinMatrixLOAD, 1);
     unlock();
-    printf("[LEDS] Set LEDs at %d%d%d%d to %d%d%d%d%d%d%d%d Status: %s\n", a1,a2,a3,a4,  d1,d2,d3,d4,d5,d6,d7,d8, strerror(errno));
+    //printf("[LEDS] Set LEDs at %d%d%d%d to %d%d%d%d%d%d%d%d Status: %s\n", a1,a2,a3,a4,  d1,d2,d3,d4,d5,d6,d7,d8, strerror(errno));
 #endif
 }
-void startLEDMatrix(){
-    setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1); // Set normal operation
-    setLEDBits(1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1); // Set scan limit to all digits
-    setLEDBits(1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Set no decode mode, to set each segment
-    setLEDBits(1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1); // Set max intensity
-}
-void stopLEDMatrix(){
-    printf("[LED_MATRIX] Disable LEDs.\n");
-#ifndef TEST
+void clearLEDMatrix(){
     setLEDBits(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 0 address: 0001
     setLEDBits(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 1 address: 0010
     setLEDBits(0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 2 address: 0011
@@ -163,46 +168,62 @@ void stopLEDMatrix(){
     setLEDBits(0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 5 address: 0110
     setLEDBits(0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 6 address: 0111
     setLEDBits(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Digit 7 address: 1000
-
+}
+void startLEDMatrix(){
+    setLEDBits(1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1); // Set display-test to get out of shutdown mode
+    sleep_ms(250);
+    setLEDBits(1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Set display-test to normal operation
+    setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1); // Set normal operation
+    setLEDBits(1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1); // Set scan limit to all digits
+    setLEDBits(1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0); // Set no decode mode, to set each segment
+    setLEDBits(1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1); // Set max intensity
+}
+void stopLEDMatrix(){
+    printf("[LED_MATRIX] Disable LEDs.\n");
+#ifndef TEST
+    clearLEDMatrix();
     setLEDBits(1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1); // Set min intensity
     setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
 #endif
 }
-void showMediumFace(){
-    printf("[LED_MATRIX] Medium face.\n");
+void showNeutralFace(){
+    printf("[LED_MATRIX] Neutral face (now=%dcm min=%dcm max=%dcm).\n", latestDistanceCm, minDistanceCm, maxDistanceCm);
 #ifndef TEST
-    setLEDBits(0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 0 address: 0001
-    setLEDBits(0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 1 address: 0010
-    setLEDBits(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 2 address: 0011
-    setLEDBits(0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 3 address: 0100
-    setLEDBits(0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 4 address: 0101
-    setLEDBits(0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 5 address: 0110
-    setLEDBits(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 6 address: 0111
-    setLEDBits(1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 7 address: 1000
+    clearLEDMatrix();
+    setLEDBits(0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 0 address: 0001
+    setLEDBits(0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 1 address: 0010
+    setLEDBits(0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 2 address: 0011
+    setLEDBits(0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0); // Digit 3 address: 0100
+    setLEDBits(0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0); // Digit 4 address: 0101
+    setLEDBits(0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 5 address: 0110
+    setLEDBits(0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 6 address: 0111
+    setLEDBits(1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 7 address: 1000
 #endif
 }
 void showHappyFace(){
-    printf("[LED_MATRIX] Happy face.\n");
+    printf("[LED_MATRIX] Happy face (now=%dcm min=%dcm max=%dcm).\n", latestDistanceCm, minDistanceCm, maxDistanceCm);
 #ifndef TEST
-    setLEDBits(0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 0 address: 0001
-    setLEDBits(0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 1 address: 0010
-    setLEDBits(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 2 address: 0011
-    setLEDBits(0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 3 address: 0100
-    setLEDBits(0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 4 address: 0101
-    setLEDBits(0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 5 address: 0110
-    setLEDBits(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 6 address: 0111
-    setLEDBits(1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1); // Digit 7 address: 1000
+    clearLEDMatrix();
+    setLEDBits(0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0); // Digit 0 address: 0001
+    setLEDBits(0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 1 address: 0010
+    setLEDBits(0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 2 address: 0011
+    setLEDBits(0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0); // Digit 3 address: 0100
+    setLEDBits(0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0); // Digit 4 address: 0101
+    setLEDBits(0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 5 address: 0110
+    setLEDBits(0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 6 address: 0111
+    setLEDBits(1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0); // Digit 7 address: 1000
 #endif
 }
 void showSadFace(){
-    printf("[LED_MATRIX] Sad face.\n");
+    printf("[LED_MATRIX] Sad face (now=%dcm min=%dcm max=%dcm).\n", latestDistanceCm, minDistanceCm, maxDistanceCm);
 #ifndef TEST
+    clearLEDMatrix();
     setLEDBits(0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0); // Digit 0 address: 0001
     setLEDBits(0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 1 address: 0010
-    setLEDBits(0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0); // Digit 2 address: 0011
-    setLEDBits(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0); // Digit 3 address: 0100
-    setLEDBits(0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0); // Digit 4 address: 0101
-    setLEDBits(0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0); // Digit 5 address: 0110
+    setLEDBits(0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 2 address: 0011
+    setLEDBits(0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0); // Digit 3 address: 0100
+    setLEDBits(0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0); // Digit 4 address: 0101
+    setLEDBits(0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 5 address: 0110
     setLEDBits(0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 6 address: 0111
     setLEDBits(1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0); // Digit 7 address: 1000
 #endif
@@ -224,9 +245,9 @@ void runT1(){ // Stepper motor
 }
 void runT2(){ // Ultrasonic sensor
     for (int i = 0; i < maxLoopCount * 4; ++i) {
-        double distance = getDistance();
-        latestDistance = distance;
-        printf("[T2-%d/SUPER_SONIC_SENSOR] %f meters Status(%d): %s\n", i, latestDistance, errno, strerror(errno));
+        int distance = getDistance();
+        latestDistanceCm = distance;
+        //printf("[T2-%d/SUPER_SONIC_SENSOR] %d centimeters Status(%d): %s\n", i, latestDistance, errno, strerror(errno));
         sleep_ms(1000 / 4);
     }
 }
@@ -234,8 +255,8 @@ void runT3(){ // LEDs matrix
     //setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
     startLEDMatrix();
     for (int i = 0; i < maxLoopCount; ++i) {
-        if(latestDistance <= maxDistance && latestDistance >= minDistance) showMediumFace();
-        else if(latestDistance > maxDistance) showHappyFace();
+        if(latestDistanceCm <= maxDistanceCm && latestDistanceCm >= minDistanceCm) showNeutralFace();
+        else if(latestDistanceCm > maxDistanceCm) showHappyFace();
         else showSadFace();
         sleep_ms(1000);
     }
@@ -324,15 +345,10 @@ int main(){
     printf("[SETUP] PIN modes set. Status(%d): %s\n", errno, strerror(errno));
     digitalWrite(0, 1);
 #endif
-    // Test LED matrix
-    startLEDMatrix();
-    sleep_ms(5000);
-    stopLEDMatrix();
-    sleep_ms(5000);
 #ifdef _WIN32
-    //initWinThreads();
+    initWinThreads();
 #else
-    //initUnixThreads();
+    initUnixThreads();
 #endif
     digitalWrite(0, 0);
 }
