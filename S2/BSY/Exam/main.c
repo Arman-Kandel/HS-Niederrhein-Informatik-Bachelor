@@ -21,35 +21,23 @@
 #endif
 
 /**
- * A number from 0 to 3 that represents a “key”.
- * When another process/thread tries to lock the same key, it will be stalled
- * until the first process/thread has unlocked the same key.
+ * When another process/thread tries to lock the same mutex, it will be stalled
+ * until the first process/thread has unlocked the same mutex.
  */
-const int keyNum = 0;
-void lock(){
-    piLock(keyNum);
-}
-void unlock(){
-    piUnlock(keyNum);
-}
+pthread_mutex_t m;
 
 const int maxLoopCount = 10;
 const int maxDistanceCm = 10;
 const int minDistanceCm = 5;
 /**
  * This is a global variable used across multiple threads,
- * but it should only be modified by one (can be read by
- * all threads without problems).
- * If you wanted to modify this on multiple threads, make sure
- * to acquire locks first like shown below:
+ * thus read/write on it should be done within a locked section.
  * @code
- #include <pthread.h>
- pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
- void *exampleFunc(void* param){
-   pthread_mutex_lock(&mutex); // lock
-   // modify variable
-   pthread_mutex_unlock(&mutex); // unlock
- }
+ #include "my-utils.h"
+ pthread_mutex_t mutex = newLock();
+ lock(&mutex);
+ // modify or read variable here
+ unlock(&mutex);
  */
 int latestDistanceCm = 0;
 
@@ -70,12 +58,12 @@ const int pinMatrixCLK = 29;
 void setMotorBits(bool b0, bool b1, bool b2, bool b3){
     //printf("Motor state: %d%d%d%d\n", b0, b1, b2, b3);
 #ifndef TEST
-    lock();
+    lock(&m);
     digitalWrite(pinMotor1AD4, b0);
     digitalWrite(pinMotor1BD5, b1);
     digitalWrite(pinMotor2AD6, b2);
     digitalWrite(pinMotor2BD7, b3);
-    unlock();
+    unlock(&m);
 #endif
 }
 void setMotorState(int state){
@@ -111,7 +99,7 @@ int getDistance(){
     int min = 0, max = 5;
     return rand() % (max-min + 1) + min;
 #else
-    lock();
+    lock(&m);
     digitalWrite(pinSuperSonicTrigger, 0);
     sleep_ms(5);
     digitalWrite(pinSuperSonicTrigger, 1);
@@ -121,7 +109,7 @@ int getDistance(){
     long long time1 = getNowMicros();
     while(digitalRead(pinSuperSonicEcho) == 1);
     long long time2 = getNowMicros();
-    unlock();
+    unlock(&m);
     // Die Schallgeschwindigkeit in trockener Luft von 20 °C beträgt 343,2 m/s (1236 km/h)
     // also 0,3432 m/ms
     long long nanoSecondsTook = time2 - time1;
@@ -151,7 +139,7 @@ void setLEDBit(bool bit){
  */
 void setLEDBits(bool a1, bool a2, bool a3, bool a4, bool d1, bool d2, bool d3, bool d4, bool d5, bool d6, bool d7, bool d8){
 #ifndef TEST
-    lock();
+    lock(&m);
     digitalWrite(pinMatrixLOAD, 0);
     for (int i = 0; i < 4; ++i) {
         setLEDBit(0);
@@ -169,7 +157,7 @@ void setLEDBits(bool a1, bool a2, bool a3, bool a4, bool d1, bool d2, bool d3, b
     setLEDBit(d7);
     setLEDBit(d8);
     digitalWrite(pinMatrixLOAD, 1);
-    unlock();
+    unlock(&m);
     //printf("[LEDS] Set LEDs at %d%d%d%d to %d%d%d%d%d%d%d%d Status: %s\n", a1,a2,a3,a4,  d1,d2,d3,d4,d5,d6,d7,d8, strerror(errno));
 #endif
 }
@@ -201,7 +189,9 @@ void stopLEDMatrix(){
 #endif
 }
 void showNeutralFace(){
+    lock(&m);
     printf("[LED_MATRIX] Neutral face (now=%dcm min=%dcm max=%dcm).\n", latestDistanceCm, minDistanceCm, maxDistanceCm);
+    unlock(&m);
 #ifndef TEST
     clearLEDMatrix();
     setLEDBits(0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0); // Digit 0 address: 0001
@@ -215,7 +205,9 @@ void showNeutralFace(){
 #endif
 }
 void showHappyFace(){
+    lock(&m);
     printf("[LED_MATRIX] Happy face (now=%dcm min=%dcm max=%dcm).\n", latestDistanceCm, minDistanceCm, maxDistanceCm);
+    unlock(&m);
 #ifndef TEST
     clearLEDMatrix();
     setLEDBits(0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0); // Digit 0 address: 0001
@@ -229,7 +221,9 @@ void showHappyFace(){
 #endif
 }
 void showSadFace(){
+    lock(&m);
     printf("[LED_MATRIX] Sad face (now=%dcm min=%dcm max=%dcm).\n", latestDistanceCm, minDistanceCm, maxDistanceCm);
+    unlock(&m);
 #ifndef TEST
     clearLEDMatrix();
     setLEDBits(0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0); // Digit 0 address: 0001
@@ -260,7 +254,9 @@ void runT1(){ // Stepper motor
 void runT2(){ // Ultrasonic sensor
     for (int i = 0; i < maxLoopCount * 4; ++i) {
         int distance = getDistance();
+        lock(&m);
         latestDistanceCm = distance;
+        unlock(&m);
         //printf("[T2-%d/SUPER_SONIC_SENSOR] %d centimeters Status(%d): %s\n", i, latestDistance, errno, strerror(errno));
         sleep_ms(1000 / 4);
     }
@@ -269,72 +265,19 @@ void runT3(){ // LEDs matrix
     //setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
     startLEDMatrix();
     for (int i = 0; i < maxLoopCount; ++i) {
-        if(latestDistanceCm <= maxDistanceCm && latestDistanceCm >= minDistanceCm) showNeutralFace();
-        else if(latestDistanceCm > maxDistanceCm) showHappyFace();
+        lock(&m);
+        int distance = latestDistanceCm;
+        unlock(&m);
+        if(distance <= maxDistanceCm && distance >= minDistanceCm) showNeutralFace();
+        else if(distance > maxDistanceCm) showHappyFace();
         else showSadFace();
         sleep_ms(1000);
     }
     stopLEDMatrix();
 }
 
-#ifdef _WIN32 // do Windows-specific stuff
-#include <windows.h>
-
-DWORD WINAPI winT1Run(void* data) {
-    runT1();
-    return 0;
-}
-DWORD WINAPI winT2Run(void* data) {
-    runT2();
-    return 0;
-}
-DWORD WINAPI winT3Run(void* data) {
-    runT3();
-    return 0;
-}
-
-int initWinThreads() {
-    HANDLE t1 = CreateThread(NULL, 0, winT1Run, NULL, 0, NULL);
-    if (!t1) {printf("Failed to start t1!\n");return -1;}
-    HANDLE t2 = CreateThread(NULL, 0, winT2Run, NULL, 0, NULL);
-    if (!t2) {printf("Failed to start t2!\n");return -1;}
-    HANDLE t3 = CreateThread(NULL, 0, winT3Run, NULL, 0, NULL);
-    if (!t3) {printf("Failed to start t3!\n");return -1;}
-
-    WaitForSingleObject(t1,INFINITE);
-    WaitForSingleObject(t2,INFINITE);
-    WaitForSingleObject(t3,INFINITE);
-}
-
-#else // do Unix-specific stuff
-#include <pthread.h>
-#include <unistd.h>
-
-void *unixT1Run(void*args) {
-    runT1();
-}
-void *unixT2Run(void*args) {
-    runT2();
-}
-void *unixT3Run(void*args) {
-    runT3();
-}
-
-int initUnixThreads() {
-    pthread_t t1;
-    pthread_create(&t1, NULL, unixT1Run, NULL);
-    pthread_t t2;
-    pthread_create(&t2, NULL, unixT2Run, NULL);
-    pthread_t t3;
-    pthread_create(&t3, NULL, unixT3Run, NULL);
-    pthread_join(t1, NULL);
-    pthread_join(t2, NULL);
-    pthread_join(t3, NULL);
-    return 0;
-}
-#endif
-
 int main(){
+    m = newLock();
 #ifdef TEST
     printf("Note that you are currently running in test mode!\n");
 #else
@@ -359,11 +302,8 @@ int main(){
     printf("[SETUP] PIN modes set. Status(%d): %s\n", errno, strerror(errno));
     digitalWrite(0, 1);
 #endif
-#ifdef _WIN32
-    initWinThreads();
-#else
-    initUnixThreads();
-#endif
+    void* functions[] = {runT1, runT2, runT3};
+    runAsyncJoin(3, functions);
     digitalWrite(0, 0);
 }
 
