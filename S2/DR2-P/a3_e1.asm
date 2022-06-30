@@ -13,7 +13,7 @@ XREG   DS.W  1
 SUB1   CLRA           ; clear a
        PSHB           ; decrement stackpointer; store b at stackpointer address; 
        JSR   SUB2     ; jump to subroutine
-       PULB           ; pull b from stack
+       PULB           ; load SP value into B; increment SP;
        RTS            ; End Subroutine SUB 1
        ORG   $1200    ; Begin Subroutine SUB 2
 SUB2   LDAB  2,SP     ; load accoumulator b
