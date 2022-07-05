@@ -4,8 +4,11 @@
 #include <pthread.h>
 #ifdef _WIN32 // do Windows-specific stuff
 #include <windows.h>
+#include <process.h>
+#define MUTEX HANDLE
 #else // do Unix-specific stuff
 #include <unistd.h>
+#define MUTEX pthread_mutex_t
 #endif
 
 void sleep_ms(int milliseconds){ // cross-platform sleep function
@@ -99,27 +102,32 @@ int runAsyncJoin(int count, void* functions[]){
 
 }
 
-int initLock(pthread_mutex_t *mutex, pthread_mutexattr_t *attr){
+int initLock(MUTEX *mutex){
+    if (mutex == NULL) return 1;
 #ifdef _WIN32 // do Windows-specific stuff
-    if (mutex == NULL)return 1;
     InitializeCriticalSection(mutex);
 #else // do Unix-specific stuff
-    return pthread_mutex_init(mutex, attr);
+    return pthread_mutex_init(mutex, NULL);
 #endif
+    return 0;
 }
 
 /**
  * @return an cross-platform, initialized mutex/lock.
  */
-pthread_mutex_t newLock(){
-    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    initLock(&mutex, NULL);
+MUTEX newLock(){
+#ifdef _WIN32 // do Windows-specific stuff
+    return CreateMutex(0, FALSE, 0);
+#else // do Unix-specific stuff
+    MUTEX mutex = PTHREAD_MUTEX_INITIALIZER;
+    initLock(&mutex);
     return mutex;
+#endif
 }
 
-int lockDestroy(pthread_mutex_t *mutex){
-#ifdef _WIN32 // do Windows-specific stuff
+int lockDestroy(MUTEX *mutex){
     if (mutex == NULL)return 1;
+#ifdef _WIN32 // do Windows-specific stuff
     DeleteCriticalSection(mutex);
     return 0;
 #else // do Unix-specific stuff
@@ -127,10 +135,10 @@ int lockDestroy(pthread_mutex_t *mutex){
 #endif
 }
 
-int lock(pthread_mutex_t *mutex)
+int lock(MUTEX *mutex)
 {
-#ifdef _WIN32 // do Windows-specific stuff
     if (mutex == NULL)return 1;
+#ifdef _WIN32 // do Windows-specific stuff
     EnterCriticalSection(mutex);
     return 0;
 #else // do Unix-specific stuff
@@ -138,10 +146,10 @@ int lock(pthread_mutex_t *mutex)
 #endif
 }
 
-int unlock(pthread_mutex_t *mutex)
+int unlock(MUTEX *mutex)
 {
-#ifdef _WIN32 // do Windows-specific stuff
     if (mutex == NULL)return 1;
+#ifdef _WIN32 // do Windows-specific stuff
     LeaveCriticalSection(mutex);
     return 0;
 #else // do Unix-specific stuff

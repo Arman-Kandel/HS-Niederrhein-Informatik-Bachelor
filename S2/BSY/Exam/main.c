@@ -16,17 +16,15 @@
 #include <string.h>
 #include <errno.h>
 #include "my-utils.h"
-#ifndef _WIN32
 #include "wiringPi.h"
-#endif
 
 /**
  * When another process/thread tries to lock the same mutex, it will be stalled
  * until the first process/thread has unlocked the same mutex.
  */
-pthread_mutex_t m;
+MUTEX m;
 
-const int maxLoopCount = 10;
+const int maxLoopCount = 20;
 const int maxDistanceCm = 10;
 const int minDistanceCm = 5;
 /**
@@ -34,7 +32,7 @@ const int minDistanceCm = 5;
  * thus read/write on it should be done within a locked section.
  * @code
  #include "my-utils.h"
- pthread_mutex_t mutex = newLock();
+ MUTEX mutex = newLock();
  lock(&mutex);
  // modify or read variable here
  unlock(&mutex);
@@ -110,13 +108,11 @@ int getDistance(){
     while(digitalRead(pinSuperSonicEcho) == 1);
     long long time2 = getNowMicros();
     unlock(&m);
-    // Die Schallgeschwindigkeit in trockener Luft von 20 °C beträgt 343,2 m/s (1236 km/h)
+    // Die Schallgeschwindigkeit in trockener Luft von 20 °C beträgt 343,2 m/s or 34320 cm/s (1236 km/h)
     // also 0,3432 m/ms
-    long long nanoSecondsTook = time2 - time1;
-    return (int)(((nanoSecondsTook * (343.2 / 1000000)) / 2) * 100);
+    double timeTook = (time2 - time1) / 2.0; // divide by 2 because sound has to bounce back
+    return (int)((timeTook * (34320.0 / 1000000.0)));
     // divide by 1000000 because second to microsecond
-    // divide by 2 because sound bounces back
-    // multiply with 100, m to cm
 #endif
 }
 
@@ -241,11 +237,11 @@ void runT1(){ // Stepper motor
     stopMotor();
     for (int i = 0; i < maxLoopCount; ++i) {
         int state = 0;
-        for (int j = 0; j < 64; ++j) { // 360 degrees spin in 1 second
+        for (int j = 0; j < 64*8; ++j) { // 360 degrees spin in 1 second
             setMotorState(state); // This performs 1/64 of the rotation
             state++;
             if(state >= 8) state = 0;
-            sleep_ms(16); // 16 * 64 = 1000 ms = 1s for one turn
+            sleep_ms(16/8); // 16 * 64 = 1000 ms = 1s for one turn
         }
         printf("[T2-%d/MOTOR] 360 degrees spin complete. Status: %s\n", i, strerror(errno));
     }
@@ -256,8 +252,8 @@ void runT2(){ // Ultrasonic sensor
         int distance = getDistance();
         lock(&m);
         latestDistanceCm = distance;
+        //printf("[T2-%d/SUPER_SONIC_SENSOR] %d centimeters Status(%d): %s\n", i, latestDistanceCm, errno, strerror(errno));
         unlock(&m);
-        //printf("[T2-%d/SUPER_SONIC_SENSOR] %d centimeters Status(%d): %s\n", i, latestDistance, errno, strerror(errno));
         sleep_ms(1000 / 4);
     }
 }
@@ -282,7 +278,10 @@ int main(){
     printf("Note that you are currently running in test mode!\n");
 #else
     printf("[SETUP] Starting... Status(%d): %s\n", errno, strerror(errno));
-    wiringPiSetup();
+    if(wiringPiSetup() != 0){
+        printf("[SETUP] Failed to setup WiringPi. Status(%d): %s", errno, strerror(errno));
+        return -1;
+    }
     printf("[SETUP] WiringPi setup complete. Status(%d): %s\n", errno, strerror(errno));
     errno = 0;
     // Set pin mode for motor pins:
