@@ -234,7 +234,6 @@ void showSadFace(){
 }
 
 void runT1(){ // Stepper motor
-    stopMotor();
     for (int i = 0; i < maxLoopCount; ++i) {
         int state = 0;
         for (int j = 0; j < 64*8; ++j) { // 360 degrees spin in 1 second
