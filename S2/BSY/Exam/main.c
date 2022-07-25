@@ -24,9 +24,9 @@
  */
 MUTEX m;
 
-const int maxLoopCount = 20;
-const int maxDistanceCm = 10;
-const int minDistanceCm = 5;
+const int maxLoopCount = 10;
+const int maxDistanceCm = 8;
+const int minDistanceCm = 6;
 /**
  * This is a global variable used across multiple threads,
  * thus read/write on it should be done within a locked section.
@@ -257,7 +257,6 @@ void runT2(){ // Ultrasonic sensor
     }
 }
 void runT3(){ // LEDs matrix
-    //setLEDBits(1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); // Set shutdown operation
     startLEDMatrix();
     for (int i = 0; i < maxLoopCount; ++i) {
         lock(&m);
