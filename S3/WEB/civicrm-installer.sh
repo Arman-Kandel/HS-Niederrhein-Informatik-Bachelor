@@ -1,5 +1,6 @@
 #/bin/sh
 # Get CiviCRM
+apt -y install zip
 wget https://download.civicrm.org/civicrm-5.55.0-wordpress.zip
 unzip civicrm-5.55.0-wordpress.zip -d /var/www/civicrm/wp-content/plugins/
 
