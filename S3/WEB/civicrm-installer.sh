@@ -1,8 +1,8 @@
 #/bin/sh
 # Get CiviCRM
 apt -y install zip
-wget https://download.civicrm.org/civicrm-5.55.0-wordpress.zip
-unzip civicrm-5.55.0-wordpress.zip -d /var/www/civicrm/wp-content/plugins/
+wget -O civicrm.zip https://download.civicrm.org/civicrm-5.55.0-wordpress.zip
+unzip civicrm.zip -d /var/www/html/wp-content/plugins/
 
 # Configure Apache
 cat << EOF >> /etc/apache2/sites-available/civicrm.conf
@@ -12,11 +12,11 @@ cat << EOF >> /etc/apache2/sites-available/civicrm.conf
 
     ServerName example.com
 
-    DocumentRoot /var/www/civicrm
+    DocumentRoot /var/www/html
 
 
 
-    <Directory /var/www/civicrm>
+    <Directory /var/www/html>
 
         Options Indexes FollowSymLinks
 
