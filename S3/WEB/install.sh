@@ -34,7 +34,7 @@ systemctl enable mariadb
 systemctl start mariadb
 
 ####Install PHP
-apt -y install php php-bz2 php-mysqli php-curl php-gd php-intl php-common php-mbstring php-xml
+apt -y install php php-bz2 php-mysqli php-curl php-gd php-intl php-common php-mbstring php-xml php-zip
 
 sed -i '0,/AllowOverride\ None/! {0,/AllowOverride\ None/ s/AllowOverride\ None/AllowOverride\ All/}' /etc/apache2/apache2.conf #Allow htaccess usage
 
