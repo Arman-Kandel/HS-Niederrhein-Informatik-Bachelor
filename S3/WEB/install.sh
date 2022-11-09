@@ -7,11 +7,9 @@ echo "==="
 echo "Creating credentials..."
 echo "==="
 install_dir="/var/www/html"
-db_name="wp`date +%s`"
-db_user=$db_name
+db_name="wordpress"
+db_user="wordpress"
 db_password=`date |md5sum |cut -c '1-12'`
-sleep 1
-mysqlrootpass=`date |md5sum |cut -c '1-12'`
 sleep 1
 
 echo "==="
@@ -31,19 +29,9 @@ rm /var/www/html/index.html
 systemctl enable apache2
 systemctl start apache2
 
-#### Start mariadb and set root password
-
+#### Start mariadb
 systemctl enable mariadb
 systemctl start mariadb
-
-/usr/bin/mariadb -e "USE mysql;"
-/usr/bin/mariadb -e "UPDATE user SET Password=PASSWORD($mysqlrootpass) WHERE user='root';"
-/usr/bin/mariadb -e "FLUSH PRIVILEGES;"
-touch /root/.my.cnf
-chmod 640 /root/.my.cnf
-echo "[client]">>/root/.my.cnf
-echo "user=root">>/root/.my.cnf
-echo "password="$mysqlrootpass>>/root/.my.cnf
 
 ####Install PHP
 apt -y install php php-bz2 php-mysqli php-curl php-gd php-intl php-common php-mbstring php-xml
@@ -103,8 +91,8 @@ grep -A50 'table_prefix' $install_dir/wp-config.php > /tmp/wp-tmp-config
 /usr/bin/lynx --dump -width 200 https://api.wordpress.org/secret-key/1.1/salt/ >> $install_dir/wp-config.php
 /bin/cat /tmp/wp-tmp-config >> $install_dir/wp-config.php && rm /tmp/wp-tmp-config -f
 /usr/bin/mariadb -u root -e "CREATE DATABASE $db_name"
-/usr/bin/mariadb -u root -e "CREATE USER '$db_name'@'localhost' IDENTIFIED WITH mysql_native_password BY '$db_password';"
-/usr/bin/mariadb -u root -e "GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'localhost';"
+/usr/bin/mariadb -u root -e "CREATE USER '$db_name'@'localhost' IDENTIFIED BY '$db_password';"
+/usr/bin/mariadb -u root -e "GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'localhost' BY '$db_password';"
 
 echo "==="
 echo "Installing CiviCRM..."
@@ -142,4 +130,3 @@ echo "WordPress available at: http://localhost"
 echo "Database Name: " $db_name
 echo "Database User: " $db_user
 echo "Database Password: " $db_password
-echo "MariaDB root password: " $mysqlrootpass
