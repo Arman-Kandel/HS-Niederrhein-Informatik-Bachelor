@@ -92,7 +92,7 @@ grep -A50 'table_prefix' $install_dir/wp-config.php > /tmp/wp-tmp-config
 /bin/cat /tmp/wp-tmp-config >> $install_dir/wp-config.php && rm /tmp/wp-tmp-config -f
 /usr/bin/mariadb -u root -e "CREATE DATABASE $db_name"
 /usr/bin/mariadb -u root -e "CREATE USER '$db_name'@'localhost' IDENTIFIED BY '$db_password';"
-/usr/bin/mariadb -u root -e "GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'localhost' BY '$db_password';"
+/usr/bin/mariadb -u root -e "GRANT ALL PRIVILEGES ON $db_name.* TO '$db_user'@'localhost' IDENTIFIED BY '$db_password';"
 /usr/bin/mariadb -u root -e "FLUSH PRIVILEGES;"
 
 echo "==="
