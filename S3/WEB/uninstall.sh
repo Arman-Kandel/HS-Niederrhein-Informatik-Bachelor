@@ -4,7 +4,7 @@ echo "==="
 echo "Deleting wordpress database and user..."
 echo "==="
 /usr/bin/mariadb -u root -e "DROP DATABASE wordpress"
-/usr/bin/mariadb -u root -e "DROP USER wordpress"
+/usr/bin/mariadb -u root -e "DROP USER 'wordpress'@'localhost'"
 
 echo "==="
 echo "Removing dependencies..."
