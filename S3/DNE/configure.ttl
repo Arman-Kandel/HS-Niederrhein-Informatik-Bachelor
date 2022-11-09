@@ -1,16 +1,124 @@
-R1g000v4='172.16.1.1 255.255.255.0' ;/24
-R1g001v4='192.168.1.1 255.255.255.0' ;/24
-R1g000v6='2001:db8:acad:2::1/64'
-R1g001v6='2001:db8:acad:1::1/64'
-R1loop1='10.1.0.1 255.255.255.0' ;/24
-R1loop2='209.165.200.225 255.255.255.224' ;/27
+myHostname=''
+; Router specific:
+g000v4=''
+g001v4=''
+g000v6=''
+g001v6=''
+v6link=''
+loop1=''
+loop2=''
+; Switch specific:
+vlan1v4=''
+vlan1v4def=''
+vlan1v6=''
+vlan1v6link=''
 
-R2g000v4='172.16.1.2 255.255.255.0' ;/24
-R2g001v4='192.168.1.2 255.255.255.0' ;/24
-R2g000v6='2001:db8:acad:2::2/64'
-R2g001v6='2001:db8:acad:1::2/64'
-R2loop1='10.2.0.1 255.255.255.0' ;/24
-R2loop2='209.165.200.193 255.255.255.224' ;/27
+
+timeout=-1
+myHostname='R1'
+g000v4='172.16.1.1 255.255.255.0' ;/24
+g001v4='192.168.1.1 255.255.255.0' ;/24
+g000v6='2001:db8:acad:2::1/64'
+g001v6='2001:db8:acad:1::1/64'
+loop1='10.1.0.1 255.255.255.0' ;/24
+loop2='209.165.200.225 255.255.255.224' ;/27
+call configureRouter
+
+myHostname='R2'
+g000v4='172.16.1.2 255.255.255.0' ;/24
+g001v4='192.168.1.2 255.255.255.0' ;/24
+g000v6='2001:db8:acad:2::2/64'
+g001v6='2001:db8:acad:1::2/64'
+v6link=''
+loop1='10.2.0.1 255.255.255.0' ;/24
+loop2='209.165.200.193 255.255.255.224' ;/27
+call configureRouter
+
+myHostname='S1'
+vlan1v4='192.168.1.4 255.255.255.0'
+vlan1v4def='192.168.1.1' ; (R1 IP)
+vlan1v6='2001:db8:acad:1::4/64'
+vlan1v6link='fe80::4'
+call configureSwitch
+
+myHostname='S2'
+vlan1v4='192.168.1.5 255.255.255.0'
+vlan1v4def='192.168.1.1' ; (R1 IP)
+vlan1v6='2001:db8:acad:1::5/64'
+vlan1v6link='fe80::5'
+call configureSwitch
+
+end
+
+:configureRouter
+settitle 'Waiting for ' myHostname ' con...'
+waitevent 8
+settitle 'Configuring ' myHostname '...'
+sendln 'enable'
+sendln 'configure terminal'
+sendln 'no ip domain-lookup'
+sendln 'hostname ' myHostname
+sendln 'banner motd #Unauthorized access to this device is prohibited!#'
+sendln 'interface g0/0/0'
+sendln 'ip address ' g000v4
+sendln 'ipv6 address ' g000v6
+sendln 'ipv6 address ' v6link ' link-local'
+sendln 'no shutdown'
+sendln 'exit'
+sendln 'interface g0/0/1'
+sendln 'ip address ' g001v4
+sendln 'ipv6 address ' g001v6
+sendln 'ipv6 address ' v6link ' link-local'
+sendln 'no shutdown'
+sendln 'exit'
+sendln 'interface loopback 1'
+sendln 'ip address ' loop1
+sendln 'exit'
+sendln 'interface loopback 2'
+sendln 'ip address ' loop2
+sendln 'no shutdown'
+sendln 'exit'
+sendln 'ipv6 unicast-routing'
+sendln 'end'
+sendln 'copy running-config startup-config'
+sendln ; Confirm save
+sendln 'reload'
+sendln ; Confirm reload
+settitle 'Configured ' myHostname '!'
+return
+
+:configureSwitch
+settitle 'Waiting for ' myHostname ' con...'
+waitevent 8
+settitle 'Configuring ' myHostname '...'
+sendln 'enable'
+sendln 'configure terminal'
+sendln 'no ip domain-lookup'
+sendln 'hostname ' myHostname
+sendln 'banner motd #Unauthorized access to this device is prohibited!#'
+sendln 'interface vlan1'
+sendln 'ip address ' vlan1v4
+sendln ''
+sendln 'ipv6 address ' vlan1v6
+sendln 'exit'
+sendln 'interface g0/0/1'
+sendln 'ip address ' g001v4
+sendln 'ipv6 address ' g001v6
+sendln 'exit'
+sendln 'interface loopback 1'
+sendln 'ip address ' loop1
+sendln 'exit'
+sendln 'interface loopback 2'
+sendln 'ip address ' loop2
+sendln 'exit'
+sendln 'ipv6 unicast-routing'
+sendln 'end'
+sendln 'copy '
+sendln 'reload'
+sendln ; Confirm reload
+settitle 'Configured ' myHostname '!'
+return
+
 
 Verkabeln des Netzwerks:
 	- PC mit S1
@@ -45,11 +153,13 @@ Nur Switches:
 	- Ungenutzte interfaces deaktivieren: interface <name> \ shutdown \ exit
 	- show ip interface brief
 Nur S1:
-	- configure terminal \ interface vlan1 \ ip address 192.168.1.4/24 255.255.255.0 192.168.1.1 (R1 IP)
+	- configure terminal \ interface vlan1 \ ip address 192.168.1.4 255.255.255.0
+	- configure terminal \ interface vlan1 \ ip default-gateway 192.168.1.1 (R1 IP)
 	- configure terminal \ sdm prefer dual-ipv4-and-ipv6 default \ end \ reload
 	- configure terminal \ interface vlan1 \ ipv6 address 2001:db8:acad:1::4/64  \ ipv6 address fe80::4 link-local \ no shutdown
 Nur S2:
-	- configure terminal \ interface vlan1 \ ip address 192.168.1.5/24 255.255.255.0 192.168.1.1 (R1 IP)
+	- configure terminal \ interface vlan1 \ ip address 192.168.1.5/24 255.255.255.0
+	- configure terminal \ interface vlan1 \ ip default-gateway 192.168.1.1 (R1 IP)
 	- configure terminal \ sdm prefer dual-ipv4-and-ipv6 default \ end \ reload
 	- configure terminal \ interface vlan1 \ ipv6 address 2001:db8:acad:1::5/64  \ ipv6 address fe80::5 link-local \ no shutdown
 Router/Switch:
