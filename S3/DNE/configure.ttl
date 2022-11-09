@@ -1,0 +1,57 @@
+R1g000v4='172.16.1.1 255.255.255.0' ;/24
+R1g001v4='192.168.1.1 255.255.255.0' ;/24
+R1g000v6='2001:db8:acad:2::1/64'
+R1g001v6='2001:db8:acad:1::1/64'
+R1loop1='10.1.0.1 255.255.255.0' ;/24
+R1loop2='209.165.200.225 255.255.255.224' ;/27
+
+R2g000v4='172.16.1.2 255.255.255.0' ;/24
+R2g001v4='192.168.1.2 255.255.255.0' ;/24
+R2g000v6='2001:db8:acad:2::2/64'
+R2g001v6='2001:db8:acad:1::2/64'
+R2loop1='10.2.0.1 255.255.255.0' ;/24
+R2loop2='209.165.200.193 255.255.255.224' ;/27
+
+Verkabeln des Netzwerks:
+	- PC mit S1
+	- PC mit R1 (Konsole)
+	- PC IP4 auf 192.168.1.3 sub:  255.255.255.0 standard: 192.168.1.1 (funktioniert mit G0/0/1-Schnittstellen der beiden Router)
+	- PC IP6 auf 2001:db8:acad:1::3 standard: fe80::1 link-local: fe80::3
+Router/Switch Konfiguration:
+	- enable
+	- configure terminal \ no ip domain-lookup \ hostname <R1/R2>
+	- Privilegierter EXEC-Modus schützen: configure terminal \ enable secret class \ exit
+	- Benutzer-EXEC-Modus schützen: configure terminal \ line console 0 \ password cisco \ login \ end
+	- VTY (Virtuelle Terminal Leitung) 0 bis 15 schützen: configure terminal \ line vty 0 15 \ password cisco \ login \ end
+	- Verschlüsseln von passwörtern in „startup-config“ und „running-config“: configure terminal \ service password-encryption
+	- Configure terminal \ banner motd #Unauthorized access to this device is prohibited!#
+Nur R1:
+	- configure terminal \ interface g0/0/0 \ ip address 172.16.1.1 255.255.255.0 (/24) \ exit 
+	- configure terminal \ interface g0/0/1 \ ip address 192.168.1.1 255.255.255.0 \ exit 
+	- configure terminal \ interface loopback 1 \ ip address 10.1.0.1 255.255.255.0 \ exit
+	- configure terminal \ interface loopback 2 \ ip address 209.165.200.225 255.255.255.224 (/27) \ exit 
+	- configure terminal \ ipv6 unicast-routing 
+	- configure terminal \ interface g0/0/0 \ ipv6 address 2001:db8:acad:2::1/64 \ ipv6 address fe80::1 link-local \ no shutdown \ exit
+	- configure terminal \ interface g0/0/1 \ ipv6 address 2001:db8:acad:1::1/64 \ ipv6 address fe80::1  link-local \ no shutdown \ exit
+Nur R2: 
+	- configure terminal \ interface g0/0/0 \ ip address 172.16.1.2 255.255.255.0 (/24) \ exit 
+	- configure terminal \ interface g0/0/1 \ ip address 192.168.1.2 255.255.255.0 \ exit 
+	- configure terminal \ interface loopback 1 \ ip address 10.2.0.1 255.255.255.0 \ exit
+	- configure terminal \ interface loopback 2 \ ip address 209.165.200.193 255.255.255.224 (/27) \ exit
+	- configure terminal \ ipv6 unicast-routing 
+	- configure terminal \ interface g0/0/0 \ ipv6 address 2001:db8:acad:2::2/64 \ ipv6 address fe80::2 link-local \ no shutdown \ exit
+	- configure terminal \ interface g0/0/1 \ ipv6 address 2001:db8:acad:1::2/64 \ ipv6 address fe80::2 link-local \ no shutdown \ exit
+Nur Switches:
+	- Ungenutzte interfaces deaktivieren: interface <name> \ shutdown \ exit
+	- show ip interface brief
+Nur S1:
+	- configure terminal \ interface vlan1 \ ip address 192.168.1.4/24 255.255.255.0 192.168.1.1 (R1 IP)
+	- configure terminal \ sdm prefer dual-ipv4-and-ipv6 default \ end \ reload
+	- configure terminal \ interface vlan1 \ ipv6 address 2001:db8:acad:1::4/64  \ ipv6 address fe80::4 link-local \ no shutdown
+Nur S2:
+	- configure terminal \ interface vlan1 \ ip address 192.168.1.5/24 255.255.255.0 192.168.1.1 (R1 IP)
+	- configure terminal \ sdm prefer dual-ipv4-and-ipv6 default \ end \ reload
+	- configure terminal \ interface vlan1 \ ipv6 address 2001:db8:acad:1::5/64  \ ipv6 address fe80::5 link-local \ no shutdown
+Router/Switch:
+	- show running-config
+	- copy running-config startup-config
