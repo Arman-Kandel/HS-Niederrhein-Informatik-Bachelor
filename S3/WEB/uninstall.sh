@@ -3,11 +3,12 @@
 echo "==="
 echo "Removing dependencies..."
 echo "==="
-apt -y remove lynx
-apt -y remove apache2
-apt -y remove mariadb-server 
-apt -y remove mariadb-client
-apt -y remove php php-bz2 php-mysqli php-curl php-gd php-intl php-common php-mbstring php-xml
+dpkg --configure -a
+apt -y purge lynx
+apt -y purge apache2
+apt -y purge mariadb-server 
+apt -y purge mariadb-client
+apt -y purge php php-bz2 php-mysqli php-curl php-gd php-intl php-common php-mbstring php-xml
 echo "==="
 echo "Uninstalling WordPress..."
 echo "==="
