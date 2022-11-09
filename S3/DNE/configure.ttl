@@ -104,7 +104,6 @@ sendln 'ipv6 address ' v6link ' link-local'
 sendln 'no shutdown'
 sendln 'exit'
 sendln 'sdm prefer dual-ipv4-and-ipv6 default'
-
 sendln 'end'
 sendln 'copy running-config startup-config'
 sendln ; Confirm save
