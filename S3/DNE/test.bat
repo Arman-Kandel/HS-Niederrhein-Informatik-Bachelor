@@ -49,3 +49,20 @@ echo vlan1v4def='192.168.1.1' ; (R1 IP)
 echo vlan1v6='2001:db8:acad:1::5/64'
 ping 2001:db8:acad:1::5
 echo v6link='fe80::5'
+
+echo Open WireShark and press any key to continue.
+pause > nul
+echo ipconfig /all ->
+ipconfig /all
+echo arp -a ->
+arp -a
+arp –d
+echo Deleted arp table.
+echo Ping S1 ->
+ping -c 1 192.168.1.4
+echo Loopback 1 of R1 ->
+ping -c 1 10.1.0.1
+echo Loopback 2 of R2 ->
+ping -c 1 209.165.200.193
+arp -a
+
