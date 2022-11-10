@@ -32,6 +32,9 @@ sendln 'ip route 10.2.0.0 255.255.255.0 192.168.1.2'
 sendln 'ip route 209.165.200.0 255.255.255.224 172.16.1.2'
 ; Schritt 3: Konfigurieren Sie auf R1 eine statische Default-Route über die Adresse G0/0/0 von R2.
 sendln 'ip route 0.0.0.0 0.0.0.0 172.16.1.2'
+sendln 'end'
+sendln 'show mac-address-table'
+sendln 'show ip route'
 call saveAndReload
 
 myHostname='R2'
@@ -45,6 +48,9 @@ loop2='209.165.200.193 255.255.255.224' ;/27
 call configureRouter
 ; Schritt 4: Konfigurieren Sie auf R2 eine statische Default-Route über die G0/0/0-Adresse von R1
 sendln 'ip route 0.0.0.0 0.0.0.0 172.16.1.1'
+sendln 'end'
+sendln 'show mac-address-table'
+sendln 'show ip route'
 call saveAndReload
 
 myHostname='S1'
@@ -53,6 +59,9 @@ vlan1v4def='192.168.1.1' ; (R1 IP)
 vlan1v6='2001:db8:acad:1::4/64'
 v6link='fe80::4'
 call configureSwitch
+sendln 'end'
+sendln 'show mac-address-table'
+sendln 'show ip route'
 call saveAndReload
 
 myHostname='S2'
@@ -61,6 +70,9 @@ vlan1v4def='192.168.1.1' ; (R1 IP)
 vlan1v6='2001:db8:acad:1::5/64'
 v6link='fe80::5'
 call configureSwitch
+sendln 'end'
+sendln 'show mac-address-table'
+sendln 'show ip route'
 call saveAndReload
 
 myHostname='R1'
