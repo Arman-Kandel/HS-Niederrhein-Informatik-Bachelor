@@ -63,6 +63,34 @@ v6link='fe80::5'
 call configureSwitch
 call saveAndReload
 
+myHostname='R1'
+settitle 'Everything configured! Waiting for ' myHostname ' con for testing...'
+waitevent 8
+sendln 'enable'
+; Geben Sie auf R1 den Befehl traceroute 10.2.0.1 ein. Die Ausgabe sollte zeigen, dass der 
+; nächste Hop 192.168.1.2 ist.
+sendln 'traceroute 10.2.0.1'
+; Geben Sie auf R1 den Befehl traceroute 209.165.200.193 ein. Die Ausgabe sollte zeigen, dass
+; der nächste Hop 172.16.1.2 ist.
+sendln 'traceroute 209.165.200.193'
+; Geben Sie den Befehl shutdown auf R1 G0/0/1 ein.
+sendln 'configure terminal'
+sendln 'interface g0/0/1'
+sendln 'shutdown'
+sendln 'end'
+; Demonstrieren Sie die funktionsfähige statische Default-Route, indem Sie den Befehl traceroute
+; 10.2.0.1 ausführen. Die Traceroute zeigt den nächsten Hop als 172.16.1.2.
+sendln 'traceroute 10.2.0.1'
+; Prüfen Sie die Routing-Funktion auf R1 mit den Befehlen show ip int brief und show ip route
+sendln 'show ip int brief'
+sendln 'show ip route'
+; Geben Sie den Befehl no shutdown auf R1 G0/0/1 ein
+sendln 'configure terminal'
+sendln 'interface g0/0/1'
+sendln 'no shutdown'
+sendln 'end'
+settitle 'Teraterm finished!'
+
 end
 
 :configureRouter
