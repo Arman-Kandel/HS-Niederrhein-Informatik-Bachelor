@@ -23,9 +23,11 @@ v6link='fe80::1' ; same for g000 and g001
 loop1='10.1.0.1 255.255.255.0' ;/24
 loop2='209.165.200.225 255.255.255.224' ;/27
 call configureRouter
+sendln 'enable'
+sendln 'configure terminal'
 ; Schritt 1: Konfigurieren Sie auf R1 eine statische Route zum R2-Loopback1-Netzwerk
 ; unter Verwendung der R2-Adresse G0/0/1 als nächsten Hop.
-; ip route <network-ip> <network-mask> <hop-ip> 
+; ip route <network-ip> <network-mask> <hop-ip>
 sendln 'ip route 10.2.0.0 255.255.255.0 192.168.1.2'
 ; Schritt 2: Konfigurieren Sie auf R1 eine statische Route zum R2-Loopback2-Netzwerk
 ; unter Verwendung der R2-Adresse G0/0/0 als nächsten Hop.
@@ -33,9 +35,9 @@ sendln 'ip route 209.165.200.0 255.255.255.224 172.16.1.2'
 ; Schritt 3: Konfigurieren Sie auf R1 eine statische Default-Route über die Adresse G0/0/0 von R2.
 sendln 'ip route 0.0.0.0 0.0.0.0 172.16.1.2'
 sendln 'end'
-sendln 'show mac-address-table'
+sendln 'show mac address-table'
+pause 2
 sendln 'show ip route'
-call saveAndReload
 
 myHostname='R2'
 g000v4='172.16.1.2 255.255.255.0' ;/24
@@ -46,12 +48,14 @@ v6link='fe80::2' ; same for g000 and g001
 loop1='10.2.0.1 255.255.255.0' ;/24
 loop2='209.165.200.193 255.255.255.224' ;/27
 call configureRouter
+sendln 'enable'
+sendln 'configure terminal'
 ; Schritt 4: Konfigurieren Sie auf R2 eine statische Default-Route über die G0/0/0-Adresse von R1
 sendln 'ip route 0.0.0.0 0.0.0.0 172.16.1.1'
 sendln 'end'
-sendln 'show mac-address-table'
+sendln 'show mac address-table'
+pause 2
 sendln 'show ip route'
-call saveAndReload
 
 myHostname='S1'
 vlan1v4='192.168.1.4 255.255.255.0'
@@ -59,10 +63,10 @@ vlan1v4def='192.168.1.1' ; (R1 IP)
 vlan1v6='2001:db8:acad:1::4/64'
 v6link='fe80::4'
 call configureSwitch
-sendln 'end'
-sendln 'show mac-address-table'
+sendln 'enable'
+sendln 'show mac address-table'
+pause 2
 sendln 'show ip route'
-call saveAndReload
 
 myHostname='S2'
 vlan1v4='192.168.1.5 255.255.255.0'
@@ -70,21 +74,22 @@ vlan1v4def='192.168.1.1' ; (R1 IP)
 vlan1v6='2001:db8:acad:1::5/64'
 v6link='fe80::5'
 call configureSwitch
-sendln 'end'
-sendln 'show mac-address-table'
+sendln 'enable'
+sendln 'show mac address-table'
+pause 2
 sendln 'show ip route'
-call saveAndReload
 
 myHostname='R1'
-settitle 'Everything configured! Waiting for ' myHostname ' con for testing...'
-waitevent 8
+yesnobox 'Everything configured! Connected for testing?' myHostname 
 sendln 'enable'
 ; Geben Sie auf R1 den Befehl traceroute 10.2.0.1 ein. Die Ausgabe sollte zeigen, dass der 
 ; nächste Hop 192.168.1.2 ist.
 sendln 'traceroute 10.2.0.1'
+pause 3
 ; Geben Sie auf R1 den Befehl traceroute 209.165.200.193 ein. Die Ausgabe sollte zeigen, dass
 ; der nächste Hop 172.16.1.2 ist.
 sendln 'traceroute 209.165.200.193'
+pause 3
 ; Geben Sie den Befehl shutdown auf R1 G0/0/1 ein.
 sendln 'configure terminal'
 sendln 'interface g0/0/1'
@@ -92,7 +97,8 @@ sendln 'shutdown'
 sendln 'end'
 ; Demonstrieren Sie die funktionsfähige statische Default-Route, indem Sie den Befehl traceroute
 ; 10.2.0.1 ausführen. Die Traceroute zeigt den nächsten Hop als 172.16.1.2.
-sendln 'traceroute 10.2.0.1'
+sendln '
+'
 ; Prüfen Sie die Routing-Funktion auf R1 mit den Befehlen show ip int brief und show ip route
 sendln 'show ip int brief'
 sendln 'show ip route'
@@ -101,58 +107,78 @@ sendln 'configure terminal'
 sendln 'interface g0/0/1'
 sendln 'no shutdown'
 sendln 'end'
-settitle 'Teraterm finished!'
+yesnobox 'Tested and finished!' 'OK!'
 
-end
+end ; <- EXIT PROGRAM ----------------------------------------------------------------------------------
 
 :configureRouter
-settitle 'Waiting for ' myHostname ' con...'
-waitevent 8
-settitle 'Configuring ' myHostname '...'
+yesnobox 'Connected?' myHostname
 sendln 'enable'
 sendln 'configure terminal'
 sendln 'no ip domain-lookup'
 sendln 'hostname ' myHostname
 sendln 'banner motd #Unauthorized access to this device is prohibited!#'
+
+; CONFIGURE ROUTER IPv4
 sendln 'interface g0/0/0'
-sendln 'ip address ' g000v4
-sendln 'ipv6 address ' g000v6
-sendln 'ipv6 address ' v6link ' link-local'
 sendln 'no shutdown'
+sendln 'ip address ' g000v4
 sendln 'exit'
 sendln 'interface g0/0/1'
-sendln 'ip address ' g001v4
-sendln 'ipv6 address ' g001v6
-sendln 'ipv6 address ' v6link ' link-local'
 sendln 'no shutdown'
+sendln 'ip address ' g001v4
 sendln 'exit'
 sendln 'interface loopback 1'
+sendln 'no shutdown'
 sendln 'ip address ' loop1
 sendln 'exit'
 sendln 'interface loopback 2'
-sendln 'ip address ' loop2
 sendln 'no shutdown'
+sendln 'ip address ' loop2
 sendln 'exit'
 sendln 'ipv6 unicast-routing'
+
+; CONFIGURE ROUTER IPv6
+call saveAndReload
+yesnobox 'Reloaded?' myHostname
+sendln 'enable'
+sendln 'configure terminal'
+sendln 'interface g0/0/0'
+sendln 'no shutdown'
+sendln 'ipv6 address ' g000v6
+sendln 'ipv6 address ' v6link ' link-local'
+sendln 'exit'
+sendln 'interface g0/0/1'
+sendln 'no shutdown'
+sendln 'ipv6 address ' g001v6
+sendln 'ipv6 address ' v6link ' link-local'
+
+sendln 'end' ; END ROUTER
 return
 
 :configureSwitch
-settitle 'Waiting for ' myHostname ' con...'
-waitevent 8
-settitle 'Configuring ' myHostname '...'
+yesnobox 'Connected?' myHostname
 sendln 'enable'
 sendln 'configure terminal'
 sendln 'no ip domain-lookup'
 sendln 'hostname ' myHostname
 sendln 'banner motd #Unauthorized access to this device is prohibited!#'
 sendln 'interface vlan1'
+sendln 'no shutdown'
 sendln 'ip address ' vlan1v4
-sendln 'ip default-gateway ' vlan1v4def
+sendln 'ip default-gateway ' vlan1v4def ; This somehow exits the interface config
+sendln 'sdm prefer dual-ipv4-and-ipv6 default'
+
+; CONFIGURE SWITCH IPv6
+call saveAndReload
+yesnobox 'Reloaded?' myHostname
+sendln 'enable'
+sendln 'configure terminal'
+sendln 'interface vlan1'
 sendln 'ipv6 address ' vlan1v6
 sendln 'ipv6 address ' v6link ' link-local'
-sendln 'no shutdown'
-sendln 'exit'
-sendln 'sdm prefer dual-ipv4-and-ipv6 default'
+
+sendln 'end' ; END SWITCH
 return
 
 :saveAndReload
@@ -161,5 +187,4 @@ sendln 'copy running-config startup-config'
 sendln ; Confirm save
 sendln 'reload'
 sendln ; Confirm reload
-settitle 'Saved and reloading ' myHostname '!'
 return
