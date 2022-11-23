@@ -6,7 +6,7 @@
 5. If you want to connect via SSH, make sure you have a rule that has the host port set to 3022 and guest port set to 22 (the other fields can stay blank).
 6. Also add a rule that has the host port set to 8080 and guest port set to 80 (the other fields can stay blank).
 7. If the VM has issues connecting to the internet (test with `ping -c 5 google.com`), close it
-and execute `VBoxManage modifyvm "<VM name>" --natdnshostresolver1 on` in your host terminal (on Windows navigate to "C:\Program Files\Oracle\VirtualBox" before).
+and execute `VBoxManage modifyvm "<VM name>" --natdnshostresolver1 on` in your host terminal (on Windows navigate to "C:\Program Files\Oracle\VirtualBox" before and prepend `.\` to the command).
 This command forces the VM to use the hosts DNS resolver instead of its own.
 
 
