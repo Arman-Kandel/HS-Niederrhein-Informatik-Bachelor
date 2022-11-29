@@ -42,7 +42,7 @@ map<int, int> getHistogram(Mat image) {
   return map;
 }
 
-void getHistogramMat(map<int, int> histogram, int pxWidth, int pxHeight) {
+Mat getHistogramMat(map<int, int> histogram, int pxWidth, int pxHeight) {
   Mat mat = {pxHeight, pxWidth, CV_32FC1};
   Scalar color = {255, 255, 255};
   Point lastPoint = {0, 0};
@@ -59,6 +59,46 @@ void getHistogramMat(map<int, int> histogram, int pxWidth, int pxHeight) {
     line(mat, lastPoint, point, color, 1);
     lastPoint = point;
   }
+  return mat;
+}
+
+// Expects the histogram to be complete aka have no missing values.
+void drawMinMaxLines(map<int, int> histogram, Mat histogramMat, int colsToSkip){
+  int lastLineHeight = 0;
+  int lineHeight = 0;
+  int maxLineHeight = 0;
+  int maxLineCol = 0;
+  int minLineHeight = 0;
+  int minLineCol = 0;
+  bool searchForFirstMax = true;
+  for (int i = 0; i<histogramMat.cols; i++) {
+    if(colsToSkip > 1){
+      colsToSkip--;
+      continue;
+    }
+    lineHeight = histogram.at(i);
+    if(searchForFirstMax){
+      if(lineHeight < lastLineHeight){
+        maxLineCol = i - 1;
+        maxLineHeight = histogram.at(maxLineCol);
+        searchForFirstMax = false;
+      } 
+    } else{ // search next minimum
+      if(lineHeight > lastLineHeight){
+        minLineCol = i - 1;
+        minLineHeight = histogram.at(minLineCol);
+        break;
+      }
+    }
+    lastLineHeight = lineHeight;
+  }
+  Scalar color = {255, 255, 255};
+  Point maxStart = {maxLineCol, 0};
+  Point minStart = {minLineCol, 0};
+  Point maxEnd = {maxLineCol, histogramMat.rows};
+  Point minEnd = {minLineCol, histogramMat.rows};
+  line(histogramMat, maxStart, maxEnd, color, 1);
+  line(histogramMat, minStart, minEnd, color, 1);
 }
 
 /*
@@ -88,6 +128,10 @@ Mat modifyImage(Mat zImage) {
       shift      // Additive offset // moves the histogram by this amount to the
                  // right, aka increases brightness if black-white picture
   );
+
+  map<int, int> hist = getHistogram(imgScaled);
+  Mat histImg = getHistogramMat(hist, imgScaled.cols, imgScaled.rows);
+  drawMinMaxLines(hist, histImg, 10);
 
   // Color the image
   Mat imgColored;
