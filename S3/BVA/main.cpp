@@ -189,12 +189,12 @@ vector<int> smoothHistogram(vector<int> hist, int relevantNeighborsCount = 2) {
     int total = 0;
     int ii = i - relevantNeighborsCount;
     int iEnd = i + relevantNeighborsCount;
-    for (; ii < iEnd; ii++) {
+    for (; ii <= iEnd; ii++) {
       try{
         total += hist[ii];
       } catch(exception ignored){}
     }
-    finalHist[i] = total / relevantNeighborsCount + 1; // +1 since only neighbor count given
+    finalHist[i] = total / relevantNeighborsCount * 2 + 1; // +1 since only neighbor count given
   }
   return finalHist;
 }
