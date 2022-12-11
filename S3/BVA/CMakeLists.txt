@@ -7,7 +7,7 @@ find_package(royale REQUIRED)
 
 find_package(OpenCV REQUIRED)
 
-add_executable(${PROJECT_NAME} main.cpp camera.h)
+add_executable(${PROJECT_NAME} main.cpp camera.h histogram.h)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)

@@ -9,6 +9,7 @@
 // #define USE_LIBROYALE // Comment out if not needed
 
 #include "camera.h"
+#include "histogram.h"
 #include <exception>
 #include <future>
 #include <iostream>
@@ -18,7 +19,6 @@
 #include <stdlib.h>
 #include <string>
 #include <thread>
-
 
 using namespace std;
 using namespace cv;
@@ -55,87 +55,6 @@ void imshow(string windowName, Mat img, double fps = 60.0) {
     }
     writer << img;
   }
-}
-
-int findeSchwellwert(Mat mat) {}
-
-// index == pixel gray value
-// value == total count of this gray value in this image
-vector<int> getHistogram(Mat image) {
-  // Create an array of bins to store the histogram values
-  const int numBins = 256;
-  vector<int> bins(numBins, 0); // Fill with zeros
-
-  // Iterate over all the pixels in the input image
-  for (int y = 0; y < image.rows; y++) {
-    for (int x = 0; x < image.cols; x++) {
-      // Get the intensity value of the current pixel
-      uchar intensity = image.at<uchar>(y, x);
-
-      // Increment the bin corresponding to the intensity value of the current
-      // pixel
-      bins[intensity]++;
-    }
-  }
-  return bins;
-}
-
-Mat getHistogramMat(vector<int> histogram, int pxWidth, int pxHeight) {
-  Mat mat = {pxHeight, pxWidth, CV_8UC3};
-  Scalar color = {255, 255, 255};
-  Point lastPoint = {0, 0};
-  for (int i = 0; i < pxWidth; i++) {
-    Point point;
-    int count = histogram[i]; // throws exception if key doesn't exist
-    point = {i, count};       // x, y
-    line(mat, lastPoint, point, color, 1);
-    lastPoint = point;
-  }
-  return mat;
-}
-
-// Expects the histogram to be complete aka have no missing values.
-// Returns the local minimum, gray value
-int drawMinMaxLines(vector<int> histogram, Mat histogramMat, int colsToSkip) {
-  int lastLineHeight = 0;
-  int lineHeight = 0;
-  int maxLineHeight = 0;
-  int maxLineCol = 0; // col == column
-  int minLineHeight = 0;
-  int minLineCol = 0; // col == column
-  bool searchForFirstMax = true;
-  for (int i = 0; i < histogramMat.cols; i++) {
-    if (colsToSkip > 1) {
-      colsToSkip--;
-      continue;
-    }
-    lineHeight = histogram[i];
-    if (searchForFirstMax) {
-      if (lineHeight < lastLineHeight) {
-        maxLineCol = i - 1;
-        maxLineHeight = histogram[maxLineCol];
-        searchForFirstMax = false;
-      }
-    } else { // search next minimum
-      if (lineHeight > lastLineHeight) {
-        minLineCol = i - 1;
-        minLineHeight = histogram[minLineCol];
-        break;
-      }
-    }
-    lastLineHeight = lineHeight;
-  }
-  // local max == green line
-  // local min == red line
-  Scalar green = {0, 255, 0}; // green
-  Scalar red = {0, 0, 255};   // BGR red
-  Point maxStart = {maxLineCol, 0};
-  Point minStart = {minLineCol, 0};
-  Point maxEnd = {maxLineCol, histogramMat.rows};
-  Point minEnd = {minLineCol, histogramMat.rows};
-  line(histogramMat, maxStart, maxEnd, green, 1);
-  line(histogramMat, minStart, minEnd, red, 1);
-  return minLineCol;
 }
 
 Mat modifyImageP1(Mat img) {
@@ -181,33 +100,67 @@ Mat modifyImageP1(Mat img) {
   // return imgColored;
 }
 
-// Returns smoothed histogram via an average filter
-vector<int> smoothHistogram(vector<int> hist, int relevantNeighborsCount = 2) {
-  std::vector<int> finalHist(256);
-
-  for (int i = 0; i < 256; ++i) {
-    int total = 0;
-    int ii = i - relevantNeighborsCount;
-    int iEnd = i + relevantNeighborsCount;
-    for (; ii <= iEnd; ii++) {
-      try{
-        total += hist[ii];
-      } catch(exception ignored){}
-    }
-    finalHist[i] = total / relevantNeighborsCount * 2 + 1; // +1 since only neighbor count given
-  }
-  return finalHist;
-}
-
 Mat modifyImageP2(Mat img, double fps) {
+  // Check the number of channels in the input image
+  // Since we need it to only have one, aka be grayscaled
+  int channels = img.channels();
+
+  // Convert the input image to grayscale if needed
+  if (channels == 3) {
+    cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+  } else if (channels == 4) {
+    cv::cvtColor(img, img, cv::COLOR_BGRA2GRAY);
+  }
+
+  // Pixel gray value closer to 0 == closer to camera
+  // Problem is that 0 == no data, and the whole background is 0/black
+  // which should be furthest away, thus actually have 255/white as value.
+  // This is fixed below:
+  int count = 0, countChanged = 0;
+  for (int i = 0; i < img.rows; i++) {
+    for (int j = 0; j < img.cols; j++) {
+      // Get the pixel at the current row and column
+      uchar pixel = img.at<uchar>(i, j);
+      if(pixel <= 10){ // Should be 0, but in test video there are only a few
+        img.at<uchar>(i, j) = 255;
+        countChanged++;
+      }
+      count++;
+    }
+  }
+  //cout << "px:"<< count << "changed px:" << countChanged << "\n";
+  //imshow("zImage-augh", img, fps);
+
+  // Find threshold:
   vector<int> hist = getHistogram(img);
-  hist = smoothHistogram(hist, 10);
+  hist = smoothHistogram(hist, 4);
+  hist = smoothHistogram(hist, 4);
+  hist = smoothHistogram(hist, 4);
   Mat histImg = getHistogramMat(hist, img.cols, img.rows);
   // Schwellwert:
-  int minGray = drawMinMaxLines(hist, histImg, 10);
+  int minGray = drawMinMaxLines(hist, histImg, 50);
   Mat imgBinary;
-  threshold(img, imgBinary, minGray, 255, THRESH_BINARY);
+  // With THRESH_BINARY all values below the threshold are
+  // set to 0, and all above are set to max (255).
+  // We need it the other way around:
+  threshold(img, imgBinary, minGray, 255, THRESH_BINARY_INV);
   imshow("zImageBin-P2", imgBinary, fps);
+  // Contours:
+  vector<vector<Point>> contours;
+  vector<Vec4i> hierarchy;
+  findContours(imgBinary, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
+  vector<Point> handContour;
+  int biggestContour = 0;
+  int biggestContourI = 0;
+  for (int i = 0; i < contours.size(); i++) {
+    vector<Point> contour = contours[i];
+    if(contour.size() > biggestContour){
+      biggestContour = contour.size();
+      biggestContourI = i;
+    }
+  }
+  drawContours(img, contours, biggestContourI, Scalar(0, 0, 0), 2);
+  imshow("zImageContours-P2", img, fps);
   return histImg;
 }
 
