@@ -1,6 +1,5 @@
 #include <opencv2/opencv.hpp>
 
-
 using namespace std;
 using namespace cv;
 
@@ -13,11 +12,13 @@ vector<int> smoothHistogram(vector<int> hist, int relevantNeighborsCount = 2) {
     int ii = i - relevantNeighborsCount;
     int iEnd = i + relevantNeighborsCount;
     for (; ii <= iEnd; ii++) {
-      try{
+      try {
         total += hist[ii];
-      } catch(exception ignored){}
+      } catch (exception ignored) {
+      }
     }
-    finalHist[i] = total / ((relevantNeighborsCount * 2) + 1); // +1 since only neighbor count given
+    finalHist[i] = total / ((relevantNeighborsCount * 2) +
+                            1); // +1 since only neighbor count given
   }
   return finalHist;
 }
@@ -45,14 +46,15 @@ vector<int> getHistogram(Mat image) {
 
 Mat getHistogramMat(vector<int> histogram, int pxWidth, int pxHeight) {
   Scalar cyan = {232, 217, 56}; // BGR cyan
-  //Scalar white = {255, 255, 255};
+  // Scalar white = {255, 255, 255};
   Mat mat = {pxHeight, pxWidth, CV_8UC3};
   Point lastPoint = {0, 0};
   for (int i = 0; i < pxWidth; i++) {
     Point point;
     int posY = histogram[i]; // throws exception if key doesn't exist
-    posY = pxHeight - posY; // Because opencv starts draw at top left, not bottom left
-    point = {i, posY};       // x, y
+    posY = pxHeight -
+           posY; // Because opencv starts draw at top left, not bottom left
+    point = {i, posY}; // x, y
     line(mat, lastPoint, point, cyan, 1);
     lastPoint = point;
   }
@@ -69,11 +71,10 @@ int drawMinMaxLines(vector<int> histogram, Mat histogramMat, int colsToSkip) {
   int minLineHeight = 0;
   int minLineCol = 0; // col == column
   bool searchForFirstMax = true;
-  if(colsToSkip >= histogramMat.cols){
-    cerr << "Columns to skip ("<< 
-    colsToSkip <<") is equal or bigger than histogram width ("
-    << histogramMat.cols <<
-    ").\n";
+  if (colsToSkip >= histogramMat.cols) {
+    cerr << "Columns to skip (" << colsToSkip
+         << ") is equal or bigger than histogram width (" << histogramMat.cols
+         << ").\n";
     return 0;
   }
   int _colsToSkip = colsToSkip;
@@ -84,8 +85,8 @@ int drawMinMaxLines(vector<int> histogram, Mat histogramMat, int colsToSkip) {
     }
     lineHeight = histogram[i];
     if (searchForFirstMax) {
-        // lineHeight 10
-        // lastLineHeight 0
+      // lineHeight 10
+      // lastLineHeight 0
       if (lineHeight < lastLineHeight) {
         maxLineCol = i - 1;
         maxLineHeight = histogram[maxLineCol];
@@ -107,7 +108,8 @@ int drawMinMaxLines(vector<int> histogram, Mat histogramMat, int colsToSkip) {
   Point maxEnd = {maxLineCol, histogramMat.rows};
   Point minEnd = {minLineCol, histogramMat.rows};
   // Line that marks the ignored values:
-  line(histogramMat, Point(colsToSkip, 0), Point(colsToSkip, histogramMat.rows), red, 1);
+  line(histogramMat, Point(colsToSkip, 0), Point(colsToSkip, histogramMat.rows),
+       red, 1);
   // Local high:
   line(histogramMat, maxStart, maxEnd, green, 1);
   // Local low:
