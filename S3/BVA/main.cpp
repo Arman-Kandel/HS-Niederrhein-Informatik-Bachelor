@@ -113,14 +113,6 @@ Mat getForegroundBinary(Mat img) {
   } else if (channels == 4) {
     cv::cvtColor(img, img, cv::COLOR_BGRA2GRAY);
   }
-  
-  // Fill small holes
-  // Create a kernel for the morphological operations
-  Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-  // Dilate the image to expand the white pixels
-  dilate(imgBinary, imgBinary, kernel);
-  // Erode the image to shrink the white pixels
-  erode(imgBinary, imgBinary, kernel);
 
   // Pixel gray value closer to 0 == closer to camera
   // Problem is that 0 == no data, and the whole background is 0/black
@@ -155,6 +147,14 @@ Mat getForegroundBinary(Mat img) {
   // set to 0, and all above are set to max (255).
   // We need it the other way around:
   threshold(img, imgBinary, minGray, 255, THRESH_BINARY_INV);
+
+  // Fill small holes
+  // Create a kernel for the morphological operations
+  Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
+  // Dilate the image to expand the white pixels
+  dilate(imgBinary, imgBinary, kernel);
+  // Erode the image to shrink the white pixels
+  erode(imgBinary, imgBinary, kernel);
   return imgBinary;
 }
 

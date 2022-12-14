@@ -47,7 +47,7 @@ vector<int> getHistogram(Mat image) {
 Mat getHistogramMat(vector<int> histogram, int pxWidth, int pxHeight) {
   Scalar cyan = {232, 217, 56}; // BGR cyan
   // Scalar white = {255, 255, 255};
-  Mat mat = {pxHeight, pxWidth, CV_8UC3};
+  Mat mat = {pxHeight, pxWidth, CV_8UC3, Scalar(0,0,0)};
   Point lastPoint = {0, 0};
   for (int i = 0; i < pxWidth; i++) {
     Point point;
