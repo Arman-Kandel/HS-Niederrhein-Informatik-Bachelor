@@ -193,21 +193,6 @@ Mat modifyImageP2(Mat img, double fps) {
   return finalImg;
 }
 
-bool hasWhitePixelIn3x3(Mat img, Point startPoint) {
-  Point p = startPoint;
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      uchar val = img.at<uchar>(p);
-      if (val == 255) {
-        return true;
-      }
-      p.y = p.y + 1;
-    }
-    p.x = p.x + 1;
-  }
-  return false;
-}
-
 // Returns a list containing contour points
 // that are the farthest away from the given convex hull.
 // Together with its distance (pixel count) to the convex hull.
@@ -239,7 +224,7 @@ vector<pair<int, Point>> mydefects(Mat imgBinary, vector<Point> convexHull,
       for (int j = 0; j < itj.count; j++, ++itj) {
         Point pt = itj.pos();
         uchar val = imgBinary.at<uchar>(pt);
-        if (hasWhitePixelIn3x3(imgBinary, pt)) {
+        if (val == 255) {
           if (j > maxDistance) {
             maxDistance = j;
             maxDistancePoint = pt;
@@ -336,14 +321,25 @@ Mat modifyImageP3(Mat img) {
     }
   }
 
+  // MY STUFF:
   vector<pair<int, Point>> myDefects =
       mydefects(imgBinary, hull, hullCenterPoint);
   sort(myDefects.begin(), myDefects.end(), [](const auto &a, const auto &b) {
     return a.first > b.first;
   }); // biggest value at i == 0
+  int biggestDistance = myDefects[0].first;
+  int minNeededDistance = biggestDistance / 3;
 
   for (int i = 0; i < myDefects.size(); i++) {
-    circle(finalImg, myDefects[i].second, 4, Scalar(0, 0, 150), 2);
+    circle(finalImg, myDefects[i].second, 4, Scalar(0, 0, 50), 2);
+  }
+
+  int countRelevantDefects = 0;
+  for (int i = 0; i < myDefects.size(); i++) {
+    if(myDefects[i].first > minNeededDistance){
+      countRelevantDefects++;
+      circle(finalImg, myDefects[i].second, 4, Scalar(0, 0, 150), 2);
+    }  
   }
 
   string s = "Gesture: ";
@@ -362,16 +358,16 @@ Mat modifyImageP3(Mat img) {
 
   // My detection
   string s2 = "(my) Gesture: ";
-  if (myDefects.size() <= 5) { // Geste 1
+  if (countRelevantDefects <= 2) { // Geste 1
     s2.append("1");
-  } else if (myDefects.size() <= 7) { // Geste 2
+  } else if (countRelevantDefects <= 3) { // Geste 2
     s2.append("2");
-  } else if (myDefects.size() <= 9) { // Geste 3
+  } else if (countRelevantDefects <= 4) { // Geste 3
     s2.append("3");
   } else {
     s2.append("-");
   }
-  s2.append(" Defects: ").append(to_string(myDefects.size()));
+  s2.append(" Defects: ").append(to_string(countRelevantDefects));
   cv::putText(finalImg, s2, Point(10, 20), cv::FONT_HERSHEY_DUPLEX, 0.4,
               Scalar(0, 155, 0), 1, false);
   return finalImg;
