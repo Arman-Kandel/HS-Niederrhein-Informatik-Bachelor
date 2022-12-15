@@ -41,8 +41,8 @@ g000v6='2001:db8:acad:2::2/64'
 g001v6='2001:db8:acad:1::2/64'
 v6link='fe80::2' ; same for g000 and g001
 v6loopLink='fe80::1' ; different for loopback
-loop1='10.2.0.1 255.255.255.0' ;/24
-loop2='209.165.200.193 255.255.255.224' ;/27
+loop1='2111:abcd:40aa:33b4:0005::1/64' ; 5. Subnetz von 2111:abcd:40aa:33b4::1 /64
+loop2='2111:abcd:40aa:33b4:0006::1/64' ; 6. Subnetz von 2111:abcd:40aa:33b4::1 /64
 call configureRouter
 sendln 'enable'
 sendln 'configure terminal'
@@ -55,7 +55,7 @@ sendln 'show ip route'
 sendln
 
 myHostname='S1'
-vlan1v6='2001:db8:acad:1::4/64'
+vlan1v6='2001:db8:acad:1::4/64' ; in subnet 0
 v6link='fe80::4'
 call configureSwitch
 sendln 'enable'
@@ -65,7 +65,7 @@ sendln 'show ip route'
 sendln
 
 myHostname='S2'
-vlan1v6='2001:db8:acad:1::5/64'
+vlan1v6='2001:db8:acad:1::5/64' ; in subnet 0
 v6link='fe80::5'
 call configureSwitch
 sendln 'enable'
