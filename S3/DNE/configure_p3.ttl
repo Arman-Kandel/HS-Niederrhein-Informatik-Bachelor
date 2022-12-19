@@ -15,7 +15,7 @@ myHostname='R1'
 g000v6='2001:db8:acad:2::1/64'
 g001v6='2001:db8:acad:1::1/64'
 v6link='fe80::1' ; same for g000 and g001
-v6loopLink=v6link
+v6loopLink=v6link ; same for g000 and g001
 loop1='2111:abcd:40aa:33b4:0003::1/64' ; 3. Subnetz von 2111:abcd:40aa:33b4::1 /64
 loop2='2111:abcd:40aa:33b4:0004::1/64' ; 4. Subnetz von 2111:abcd:40aa:33b4::1 /64
 call configureRouter
@@ -23,17 +23,17 @@ sendln 'enable'
 sendln 'configure terminal'
 ; Schritt 1: Konfigurieren Sie auf R1 eine statische Route zum R2-Loopback1-Netzwerk
 ; unter Verwendung der R2-Adresse G0/0/1 als nächsten Hop.
-; ip route <network-ip> <network-mask> <hop-ip>
-sendln 'ip route 10.2.0.0 255.255.255.0 192.168.1.2'
+; ipv6 route IPv6-Zielnetzwerk::/64 next-hop-IPv6-address
+sendln 'ipv6 route 2111:abcd:40aa:33b4:0005::1/64 2001:db8:acad:1::2/64' ; R2 L1 und hop: R2 G001
 ; Schritt 2: Konfigurieren Sie auf R1 eine statische Route zum R2-Loopback2-Netzwerk
 ; unter Verwendung der R2-Adresse G0/0/0 als nächsten Hop.
-sendln 'ip route 209.165.200.0 255.255.255.224 172.16.1.2'
+sendln 'ipv6 route 2111:abcd:40aa:33b4:0006::1/64 2001:db8:acad:2::2/64' ; R2 L2 und hop: R2 G000
 ; Schritt 3: Konfigurieren Sie auf R1 eine statische Default-Route über die Adresse G0/0/0 von R2.
-sendln 'ip route 0.0.0.0 0.0.0.0 172.16.1.2'
+sendln 'ipv6 route ::/0 2001:db8:acad:2::2/64' ; R2 G000
 sendln 'end'
 sendln 'show mac address-table'
 sendln
-sendln 'show ip route'
+sendln 'show ipv6 route'
 sendln
 
 myHostname='R2'
@@ -47,11 +47,11 @@ call configureRouter
 sendln 'enable'
 sendln 'configure terminal'
 ; Schritt 4: Konfigurieren Sie auf R2 eine statische Default-Route über die G0/0/0-Adresse von R1
-sendln 'ip route 0.0.0.0 0.0.0.0 172.16.1.1'
+sendln 'ipv6 route ::/0 2001:db8:acad:2::1/64' ; R1 G000
 sendln 'end'
 sendln 'show mac address-table'
 sendln
-sendln 'show ip route'
+sendln 'show ipv6 route'
 sendln
 
 myHostname='S1'
@@ -61,7 +61,7 @@ call configureSwitch
 sendln 'enable'
 sendln 'show mac address-table'
 sendln
-sendln 'show ip route'
+sendln 'show ipv6 route'
 sendln
 
 myHostname='S2'
@@ -71,32 +71,44 @@ call configureSwitch
 sendln 'enable'
 sendln 'show mac address-table'
 sendln
-sendln 'show ip route'
+sendln 'show ipv6 route'
 sendln
 
 myHostname='R1'
-yesnobox 'Everything configured! Connected for testing?' myHostname 
+yesnobox 'Everything configured! Connected for testing R1?' myHostname 
 sendln 'enable'
-; Geben Sie auf R1 den Befehl traceroute 10.2.0.1 ein. Die Ausgabe sollte zeigen, dass der 
-; nächste Hop 192.168.1.2 ist.
-sendln 'traceroute 10.2.0.1'
+; Prüfen Sie die Routing-Funktion auf R1 mit den Befehlen show ip int brief und show ip route
+sendln 'show ipv6 int brief'
 sendln
-; Geben Sie auf R1 den Befehl traceroute 209.165.200.193 ein. Die Ausgabe sollte zeigen, dass
-; der nächste Hop 172.16.1.2 ist.
-sendln 'traceroute 209.165.200.193'
+sendln 'show ipv6 route'
+sendln
+; Geben Sie auf R1 den Befehl traceroute ipv6 zum LO1-Interface auf R2 ein. Die Ausgabe sollte
+; zeigen, dass der nächste Hop G0/0/1 auf R2 ist.
+sendln 'traceroute ipv6 2111:abcd:40aa:33b4:0005::1/64' ; R2 L1
+sendln
+; Geben Sie auf R1 den Befehl traceroute ipv6 zum LO2-Interface auf R2 ein. Die Ausgabe sollte
+; zeigen, dass der nächste Hop G0/0/0 auf R2 ist.
+sendln 'traceroute ipv6 2111:abcd:40aa:33b4:0006::1/64' ; R2 L2
 sendln
 ; Geben Sie den Befehl shutdown auf R1 G0/0/1 ein.
 sendln 'configure terminal'
 sendln 'interface g0/0/1'
 sendln 'shutdown'
 sendln 'end'
+sendln
 ; Demonstrieren Sie die funktionsfähige statische Default-Route, indem Sie den Befehl traceroute
-; 10.2.0.1 ausführen. Die Traceroute zeigt den nächsten Hop als 172.16.1.2.
-sendln 
-; Prüfen Sie die Routing-Funktion auf R1 mit den Befehlen show ip int brief und show ip route
-sendln 'show ip int brief'
-sendln 'show ip route'
+; ipv6 zum LO1-Interface auf R2 ausführen. Die Traceroute zeigt auf den nächsten Hop G0/0/0 auf
+; Router R2.
+myHostname='R2'
+yesnobox 'Connected for testing R2?' myHostname 
+sendln 'enable'
+sendln 'traceroute ipv6 2111:abcd:40aa:33b4:0005::1/64' ; R2 L1
+sendln
+
 ; Geben Sie den Befehl no shutdown auf R1 G0/0/1 ein
+myHostname='R1'
+yesnobox 'Connected for testing R1?' myHostname 
+sendln 'enable'
 sendln 'configure terminal'
 sendln 'interface g0/0/1'
 sendln 'no shutdown'
