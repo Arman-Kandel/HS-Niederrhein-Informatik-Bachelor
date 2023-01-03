@@ -1,0 +1,63 @@
+####
+AUFGABE 1
+####
+DROP FUNCTION
+DROP FUNCTION
+DROP FUNCTION
+DROP TRIGGER
+DROP VIEW
+DROP TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE FUNCTION
+CREATE TRIGGER
+INSERT 0 2
+INSERT 0 1
+INSERT 0 1
+psql:p3.sql:119: ERROR:  Regel 1! 3200.00 > 3000.00
+CONTEXT:  PL/pgSQL function check_change() line 20 at RAISE
+INSERT 0 1
+INSERT 0 1
+psql:p3.sql:132: ERROR:  Regel 2! 3000.00 < 3200.00
+CONTEXT:  PL/pgSQL function check_change() line 25 at RAISE
+psql:p3.sql:137: ERROR:  Regel 4! 2018-01-01 < 2019-01-01
+CONTEXT:  PL/pgSQL function check_change() line 39 at RAISE
+UPDATE 1
+psql:p3.sql:147: ERROR:  Regel 1! 4500.00 > 4200.00
+CONTEXT:  PL/pgSQL function check_change() line 20 at RAISE
+UPDATE 1
+####
+AUFGABE 2
+####
+Geben Sie pro Abteilung die Abteilungsnummer (anr), den Namen der Abteilung
+und die Gesamtanzahl der Gehaltsänderungen in dieser Abteilung aus.
+ anr |    name     | count_changed_gehalt 
+-----+-------------+----------------------
+   1 | Vertrieb    |                    2
+   2 | Entwicklung |                    2
+(2 rows)
+
+Definieren Sie einen View alleGehaelter mit den Attributen (pnr, gehalt,
+gueltigAb), der die aktuellen und früheren Gehälter aller Personen mit den
+jeweiligen gueltigAb - Daten enthält (Hinweis: UNION).
+CREATE VIEW
+ pnr | gehalt  | gueltigab  
+-----+---------+------------
+   2 | 3200.00 | 2019-01-01
+   3 | 3400.00 | 2020-01-01
+   3 | 4080.00 | 2021-01-01
+   3 | 3200.00 | 2019-01-01
+   1 | 2000.00 | 2019-01-01
+   4 | 3000.00 | 2019-01-01
+(6 rows)
+
+Ermitteln Sie unter Verwendung des zuvor definierten Views das Gehalt einer
+gegebenen Person (pnr) zu einem bestimmten Zeitpunkt.
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE FUNCTION
+        my_func         
+------------------------
+ (1,2000.00,2019-01-01)
+(1 row)
