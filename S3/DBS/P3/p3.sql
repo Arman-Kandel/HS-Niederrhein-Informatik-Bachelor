@@ -107,7 +107,28 @@ UPDATE Person SET gehalt = 4200, gueltigAb = to_date('01.01.2021','DD.MM.YYYY') 
 \echo ####
 \echo AUFGABE 2
 \echo ####
+\echo Geben Sie pro Abteilung die Abteilungsnummer (anr), den Namen der Abteilung
+\echo und die Gesamtanzahl der Gehaltsänderungen in dieser Abteilung aus.
+SELECT 
+anr,
+name, 
+(SELECT COUNT(column_name)
+FROM gehaltshistorie 
+WHERE anr=abteilung.anr) AS count_changed_gehalt,
+FROM abteilung;
 
+\echo Definieren Sie einen View alleGehaelter mit den Attributen (pnr, gehalt,
+\echo gueltigAb), der die aktuellen und früheren Gehälter aller Personen mit den
+\echo jeweiligen gueltigAb-Daten enthält (Hinweis: UNION).
+CREATE OR REPLACE VIEW alleGehaelter AS
+  SELECT pnr, gehalt, gueltigAb FROM person
+  UNION
+  SELECT pnr, gehalt, gueltigAb FROM gehaltshistorie;
+SELECT * FROM alleGehaelter;
+
+\echo Ermitteln Sie unter Verwendung des zuvor definierten Views das Gehalt einer
+\echo gegebenen Person (pnr) zu einem bestimmten Zeitpunkt. 
+SELECT * FROM alleGehaelter WHERE pnr = '1' AND gueltigAb = to_date('01.01.2019','DD.MM.YYYY');
 
 DROP TABLE abteilung;
 DROP TABLE person;
