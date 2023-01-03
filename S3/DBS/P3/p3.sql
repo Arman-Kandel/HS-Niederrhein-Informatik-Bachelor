@@ -5,6 +5,9 @@
 \echo ####
 
 -- First drop things that depend on the tables, then the tables.
+DROP FUNCTION IF EXISTS month(param_date DATE);
+DROP FUNCTION IF EXISTS year(param_date DATE);
+DROP FUNCTION IF EXISTS my_func();
 DROP TRIGGER IF EXISTS my_trigger ON person;
 DROP VIEW IF EXISTS alleGehaelter;
 DROP TABLE IF EXISTS abteilung, person, gehaltshistorie;
@@ -186,21 +189,18 @@ FROM
 \echo Ermitteln Sie unter Verwendung des zuvor definierten Views das Gehalt einer
 \echo gegebenen Person (pnr) zu einem bestimmten Zeitpunkt.
 
-DROP FUNCTION IF EXISTS month(param_date DATE);
 CREATE FUNCTION month(param_date DATE) RETURNS CHAR(2) AS $$
     BEGIN
         RETURN to_char(param_date, 'MM');
     END;
 $$ LANGUAGE plpgsql;
 
-DROP FUNCTION IF EXISTS year(param_date DATE);
 CREATE FUNCTION year(param_date DATE) RETURNS CHAR(4) AS $$
     BEGIN
         RETURN to_char(param_date, 'YYYY');
     END;
 $$ LANGUAGE plpgsql;
 
-DROP FUNCTION IF EXISTS my_func();
 CREATE FUNCTION my_func() RETURNS SETOF alleGehaelter AS $$
     #variable_conflict use_variable
     DECLARE
